@@ -179,6 +179,7 @@ export class NearApp extends LitElement {
                         text-align:right;
                         padding:.5em;
                         color:#555;
+                        cursor:pointer;
                         text-decoration: none;
                 }
                 .drawer-content h2{
@@ -192,7 +193,6 @@ export class NearApp extends LitElement {
 
                 .main-contentsection {
                         padding: 88px 16px;
-                        font-family: 'Cormorant Garamond', serif;
                         min-height: calc(50vh - 64px);
                 }
 
@@ -249,7 +249,7 @@ export class NearApp extends LitElement {
                 
                 
 
-
+                .container{clear:both}
 
                 .container {
                         max-width: var(--container-max-width);
