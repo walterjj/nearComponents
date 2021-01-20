@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>web</title>
+
+    <meta name="description" content="Idoneos test">
+    <link rel="canonical" />
+    
+  
+    <!-- See https://goo.glrm /OOhYW5 -->
+    <link rel="manifest" href="/manifest.json">
+  
+    <!-- See https://goo.gl/qRE0vM -->
+    <meta name="theme-color" content="#002233">
+  
+    <!-- Add to homescreen for Chrome on Android. Fallback for manifest.json -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="nearServices">
+  
+    <!-- Add to homescreen for Safari on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="nearServices">
+  
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icon-128.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.png">
+    
+  
+    <!-- Default twitter cards -->
+    <meta name="twitter:card" content="summary">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="">
+    <meta property="og:url" content="">
+    <meta property="og:site_name" content="nearServices">
+    <meta property="og:image" content="" >
+    <meta property="og:description" content="" >
+
+  
+
+
+
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=swap" rel="stylesheet">
+  <!-- Load webcomponents-loader.js to check and load any polyfills your browser needs -->
+  
+
+  <style>
+
+    body {
+      margin: 0;
+      font-family: Roboto,sans-serif;
+      min-height: 100vh;
+    }
+    
+
+  
+  </style>
+
+<script>document.addEventListener('WebComponentsReady', function componentsReady() {
+  document.removeEventListener('WebComponentsReady', componentsReady, false);
+
+  var script = document.createElement('script');
+  script.async = true;
+  script.type="module";
+  script.src = '/index.js';
+  var refScript = document.body.getElementsByTagName('script')[0];
+  refScript.parentNode.insertBefore(script, refScript);
+}, false);</script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-92291-1', 'auto');
+  ga('require', 'displayfeatures');
+  
+  var _gaq = _gaq || [];
+</script>
+
+</head>
+<body unresolved>
+  
+  <near-app >
+    <near-share slot="nav-dom"></near-share>
+    <near-share box label="compartir" slot="drawer-dom"></near-share>
+    <div slot="drawer-dom">
+      
+    </div>
+    <header id="header" slot="header"><div>&#8230;</div></header>
+    <div id="top"></div><div id="content"></div></near-app>
+       
+<script defer="defer" src="/node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+<div id="bodyend"></div>
+
+</html>

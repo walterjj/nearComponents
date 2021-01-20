@@ -1,0 +1,32 @@
+{
+  "name": "nearcomponents",
+  "version": "1.0.0",
+  "description": "nearComponents",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "es-dev-server -n --preserve-symlinks --app-index index.html",
+    "serve_prod": "es-dev-server -n --preserve-symlinks --open ru/",
+    "build": "./build.sh"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "@material/mwc-base": "latest",
+    "@material/mwc-button": "latest",
+    "@material/mwc-drawer": "latest",
+    "@material/mwc-formfield": "latest",
+    "@material/mwc-icon": "latest",
+    "@material/mwc-icon-button": "latest",
+    "@material/mwc-top-app-bar": "latest",
+    "@material/mwc-top-app-bar-fixed": "latest",
+    "@webcomponents/webcomponentsjs": "latest",
+    "amazon-cognito-identity-js": "latest",
+    "cookieconsent": "^3.1.1",
+    "lit-element": "latest",
+    "lit-html": "latest"
+  },
+  "author": "WJJ",
+  "license": "ISC",
+  "devDependencies": {
+  }
+}
