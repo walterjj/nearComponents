@@ -108,14 +108,11 @@ export class NearApp extends LitElement {
                         background-color:white;
                 }
 
-                screen{
+                .screen{
                         display: flex;        
                         flex-direction: column;
                         justify-content:center;
                         text-align: center;
-                        color:white;
-                        
-                        text-shadow: 0px 0px 1vh #000,0px 0px 3vh #000, 0px 0px 5vh #fff;
                         height: calc(100vh - 60px);
                 }
 
