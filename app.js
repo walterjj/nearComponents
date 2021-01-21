@@ -434,48 +434,93 @@ export class NearApp extends LitElement {
   }
   render() {
     
-    return html`
-      <mwc-drawer id="drawer" nhasHeader  @MDCDrawer:opened="${this.drawerOpened}" @MDCDrawer:closed="${this.drawerClosed}" type="modal" nclick="${this.closeDrawer}">
-      <span slot="title">${this.topBarTitle()}</span>
-      <span slot="subtitle"></span>
-      <div class="drawer-content">
-
-        <div  class="ntabs" role="navigation" slot="actionItems" >
-            ${this.drawerMenu()}
-        </div>
-      </div> 
-      <div id="app-content" slot="appContent">
-      <mwc-top-app-bar-fixed dense class="toolbar">
-        <mwc-icon-button slot="navigationIcon" icon="menu" @click="${this.handleNavigationClick}"></mwc-icon-button>
-        <div slot="title">${this.topBarTitle()}</div>
- 
-        <near-selector class="tabs" role="navigation" slot="actionItems">
-            ${this.menu()}
-            ${this.pageMenu()}
-            ${this.userExtra()}  
-        </near-selector>
+    if(this.fixedTopBar){
+        return html`
+        <mwc-top-app-bar-fixed dense class="toolbar">
+                <mwc-icon-button slot="navigationIcon" icon="menu" @click="${this.handleNavigationClick}"></mwc-icon-button>
+                <div slot="title">${this.topBarTitle()}</div>
         
-        <near-user 
-         slot="actionItems"
-         poolId="${this.poolId}"
-          clientId="${this.clientId}"
-          baseURL="${this.baseURL}"
-          apiURL="${this.apiURL}" 
-          lang="${this.lang}"
-          @user-ready="${this.onUserReady}"
-          signInLabel="${this.signInLabel}"
-          ?noregister="${this.noregister}"
-          >user</near-user> 
+                <near-selector class="tabs" role="navigation" slot="actionItems">
+                ${this.menu()}
+                ${this.pageMenu()}
+                ${this.userExtra()}  
+                </near-selector>
+                
+                <near-user 
+                slot="actionItems"
+                poolId="${this.poolId}"
+                clientId="${this.clientId}"
+                baseURL="${this.baseURL}"
+                apiURL="${this.apiURL}" 
+                lang="${this.lang}"
+                @user-ready="${this.onUserReady}"
+                signInLabel="${this.signInLabel}"
+                ?noregister="${this.noregister}"
+                >user</near-user> 
 
-        </mwc-top-app-bar-fixed>
-        
-        <div class="main-content">     
-          ${this.internalPage()}
-               
+                </mwc-top-app-bar-fixed>
+        <mwc-drawer id="drawer" nhasHeader  @MDCDrawer:opened="${this.drawerOpened}" @MDCDrawer:closed="${this.drawerClosed}" type="modal" nclick="${this.closeDrawer}">
+        <span slot="title">${this.topBarTitle()}</span>
+        <span slot="subtitle"></span>
+        <div class="drawer-content">
+
+                <div  class="ntabs" role="navigation" slot="actionItems" >
+                ${this.drawerMenu()}
+                </div>
+        </div> 
+        <div id="app-content" slot="appContent">
+                        
+                <div class="main-content">     
+                ${this.internalPage()}
+                
+                </div>
+                <site-footer></site-footer> 
         </div>
-        <site-footer></site-footer> 
-    </div>
-  </mwc-drawer>`
+        </mwc-drawer>`
+    }else{
+        return html`
+        <mwc-drawer id="drawer" nhasHeader  @MDCDrawer:opened="${this.drawerOpened}" @MDCDrawer:closed="${this.drawerClosed}" type="modal" nclick="${this.closeDrawer}">
+        <span slot="title">${this.topBarTitle()}</span>
+        <span slot="subtitle"></span>
+        <div class="drawer-content">
+
+                <div  class="ntabs" role="navigation" slot="actionItems" >
+                ${this.drawerMenu()}
+                </div>
+        </div> 
+        <div id="app-content" slot="appContent">
+        <mwc-top-app-bar-fixed dense class="toolbar">
+                <mwc-icon-button slot="navigationIcon" icon="menu" @click="${this.handleNavigationClick}"></mwc-icon-button>
+                <div slot="title">${this.topBarTitle()}</div>
+        
+                <near-selector class="tabs" role="navigation" slot="actionItems">
+                ${this.menu()}
+                ${this.pageMenu()}
+                ${this.userExtra()}  
+                </near-selector>
+                
+                <near-user 
+                slot="actionItems"
+                poolId="${this.poolId}"
+                clientId="${this.clientId}"
+                baseURL="${this.baseURL}"
+                apiURL="${this.apiURL}" 
+                lang="${this.lang}"
+                @user-ready="${this.onUserReady}"
+                signInLabel="${this.signInLabel}"
+                ?noregister="${this.noregister}"
+                >user</near-user> 
+
+                </mwc-top-app-bar-fixed>
+                
+                <div class="main-content">     
+                ${this.internalPage()}
+                
+                </div>
+                <site-footer></site-footer> 
+        </div>
+        </mwc-drawer>`
+    }
   }
 
   static get properties() {
@@ -490,6 +535,10 @@ export class NearApp extends LitElement {
 
       },
       routeData: Object,
+      fixedTopBar:{ 
+              type: Boolean,
+              default:false
+        },
       subroute: Object,
       signedLoad: {
               type:Boolean,
@@ -827,7 +876,7 @@ export class NearApp extends LitElement {
   fixToolbar(){
         let toolbar=this.shadowRoot.querySelector(".toolbar");
         let header=toolbar.shadowRoot.querySelector("header");
-        header.style.width= this.shadowRoot.getElementById("drawer").open && this.drawerStatic? "calc(100% - 256px)" :"100%";
+        if(!this.fixedTopBar)header.style.width= this.shadowRoot.getElementById("drawer").open && this.drawerStatic? "calc(100% - 256px)" :"100%";
                         
   }
 
