@@ -264,7 +264,7 @@ export class NearUser extends LitElement {
 
   async initAmz() {
     if(CognitoUserPool==null) {
-     await import('./amazon-cognito-identity.min.js')
+     await import('amazon-cognito-identity-js')
      //.then(amz=>{
      //  console.log(amz);
      //})
