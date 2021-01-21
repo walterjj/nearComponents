@@ -432,33 +432,37 @@ export class NearApp extends LitElement {
   topBarTitle(){
     return html`${this.title}`;      
   }
+
+  renderTopBar(){
+          return html`<mwc-top-app-bar-fixed dense class="toolbar">
+          <mwc-icon-button slot="navigationIcon" icon="menu" @click="${this.handleNavigationClick}"></mwc-icon-button>
+          <div slot="title">${this.topBarTitle()}</div>
+  
+          <near-selector class="tabs" role="navigation" slot="actionItems">
+          ${this.menu()}
+          ${this.pageMenu()}
+          ${this.userExtra()}  
+          </near-selector>
+          
+          <near-user 
+          slot="actionItems"
+          poolId="${this.poolId}"
+          clientId="${this.clientId}"
+          baseURL="${this.baseURL}"
+          apiURL="${this.apiURL}" 
+          lang="${this.lang}"
+          @user-ready="${this.onUserReady}"
+          signInLabel="${this.signInLabel}"
+          ?noregister="${this.noregister}"
+          >user</near-user> 
+
+          </mwc-top-app-bar-fixed>`
+  }
+
   render() {
     
-    if(this.fixedTopBar){
         return html`
-        <mwc-top-app-bar-fixed dense class="toolbar">
-                <mwc-icon-button slot="navigationIcon" icon="menu" @click="${this.handleNavigationClick}"></mwc-icon-button>
-                <div slot="title">${this.topBarTitle()}</div>
-        
-                <near-selector class="tabs" role="navigation" slot="actionItems">
-                ${this.menu()}
-                ${this.pageMenu()}
-                ${this.userExtra()}  
-                </near-selector>
-                
-                <near-user 
-                slot="actionItems"
-                poolId="${this.poolId}"
-                clientId="${this.clientId}"
-                baseURL="${this.baseURL}"
-                apiURL="${this.apiURL}" 
-                lang="${this.lang}"
-                @user-ready="${this.onUserReady}"
-                signInLabel="${this.signInLabel}"
-                ?noregister="${this.noregister}"
-                >user</near-user> 
-
-                </mwc-top-app-bar-fixed>
+        ${this.fixedTopBar? this.renderTopBar():""}
         <mwc-drawer id="drawer" nhasHeader  @MDCDrawer:opened="${this.drawerOpened}" @MDCDrawer:closed="${this.drawerClosed}" type="modal" nclick="${this.closeDrawer}">
         <span slot="title">${this.topBarTitle()}</span>
         <span slot="subtitle"></span>
@@ -469,7 +473,7 @@ export class NearApp extends LitElement {
                 </div>
         </div> 
         <div id="app-content" slot="appContent">
-                        
+        ${this.fixedTopBar? "": this.renderTopBar()}         
                 <div class="main-content">     
                 ${this.internalPage()}
                 
@@ -477,50 +481,7 @@ export class NearApp extends LitElement {
                 <site-footer></site-footer> 
         </div>
         </mwc-drawer>`
-    }else{
-        return html`
-        <mwc-drawer id="drawer" nhasHeader  @MDCDrawer:opened="${this.drawerOpened}" @MDCDrawer:closed="${this.drawerClosed}" type="modal" nclick="${this.closeDrawer}">
-        <span slot="title">${this.topBarTitle()}</span>
-        <span slot="subtitle"></span>
-        <div class="drawer-content">
-
-                <div  class="ntabs" role="navigation" slot="actionItems" >
-                ${this.drawerMenu()}
-                </div>
-        </div> 
-        <div id="app-content" slot="appContent">
-        <mwc-top-app-bar-fixed dense class="toolbar">
-                <mwc-icon-button slot="navigationIcon" icon="menu" @click="${this.handleNavigationClick}"></mwc-icon-button>
-                <div slot="title">${this.topBarTitle()}</div>
-        
-                <near-selector class="tabs" role="navigation" slot="actionItems">
-                ${this.menu()}
-                ${this.pageMenu()}
-                ${this.userExtra()}  
-                </near-selector>
-                
-                <near-user 
-                slot="actionItems"
-                poolId="${this.poolId}"
-                clientId="${this.clientId}"
-                baseURL="${this.baseURL}"
-                apiURL="${this.apiURL}" 
-                lang="${this.lang}"
-                @user-ready="${this.onUserReady}"
-                signInLabel="${this.signInLabel}"
-                ?noregister="${this.noregister}"
-                >user</near-user> 
-
-                </mwc-top-app-bar-fixed>
-                
-                <div class="main-content">     
-                ${this.internalPage()}
-                
-                </div>
-                <site-footer></site-footer> 
-        </div>
-        </mwc-drawer>`
-    }
+   
   }
 
   static get properties() {
