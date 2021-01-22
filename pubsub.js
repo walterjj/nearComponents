@@ -1,6 +1,15 @@
+'use strict';
+
 import {LitElement, html, css} from "lit-element";
 import {NearUser} from "./user";
-import * as MQTT from '/mqtt.min.js'
+//import * as MQTT from '/mqtt.min.js'
+
+let isLoaded=false;
+async function initMqtt() {
+        if(!isLoaded)
+                await import('./mqtt.min.js')
+       isLoaded=true;         
+}
 
 export class NearMqtt extends LitElement {
         static get properties() {
@@ -54,6 +63,7 @@ export class NearMqtt extends LitElement {
         }
 
         connect(){
+                initMqtt();
                 return new Promise((resolve)=>{
                         NearUser.instance.getApi("ioturl").then((data)=>{
                                 console.log(data.url);  

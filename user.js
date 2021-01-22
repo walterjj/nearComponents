@@ -4,7 +4,6 @@
 
 import { LitElement, html, css } from 'lit-element';
 
-
 let  CognitoUserPool=null; 
 let  CognitoUserAttribute=null; 
 let  CognitoUser=null;  
@@ -264,11 +263,15 @@ export class NearUser extends LitElement {
 
   async initAmz() {
     if(CognitoUserPool==null) {
-     await import('amazon-cognito-identity-js')
+     window.AmazonCognitoIdentity=null; 
+     let mod=await import('./amazon-cognito-identity.min.js');
+     //AmazonCognitoIdentity=AmazonCognitoIdentity || mod.AmazonCognitoIdentity;
      //.then(amz=>{
      //  console.log(amz);
      //})
+     
      CognitoUserPool=AmazonCognitoIdentity.CognitoUserPool; 
+     
      CognitoUserAttribute=AmazonCognitoIdentity.CognitoUserAttribute; 
      CognitoUser=AmazonCognitoIdentity.CognitoUser;  
      AuthenticationDetails=AmazonCognitoIdentity.AuthenticationDetails; 
