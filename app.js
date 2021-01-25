@@ -16,6 +16,7 @@ import {Icon} from '@material/mwc-icon'
 import  {NearUser} from "./user.js";
 import {NearMenu} from './menu.js'
 import {LitElement, html, css } from 'lit-element';
+import {render} from 'lit-html';
 import {NearLocation, NearRoute} from './route.js';
 import {NearContent} from  './content.js'
 import {NearArticle} from  './article.js'
@@ -452,6 +453,7 @@ export class NearApp extends LitElement {
           apiURL="${this.apiURL}" 
           lang="${this.lang}"
           @user-ready="${this.onUserReady}"
+          @user-logout="${this.onUserLogout}"
           signInLabel="${this.signInLabel}"
           ?noregister="${this.noregister}"
           >user</near-user> 
@@ -468,7 +470,7 @@ export class NearApp extends LitElement {
         <span slot="subtitle"></span>
         <div class="drawer-content">
 
-                <div  class="ntabs" role="navigation" slot="actionItems" >
+                <div  id="drawer-menu" class="ntabs" role="navigation" slot="actionItems" >
                 ${this.drawerMenu()}
                 </div>
         </div> 
@@ -504,6 +506,10 @@ export class NearApp extends LitElement {
       signedLoad: {
               type:Boolean,
               default: true
+      },
+      signedIn: {
+        type:Boolean,
+        default: false
       }
     };
   }
@@ -620,9 +626,17 @@ export class NearApp extends LitElement {
   
   onUserReady(e){
     console.log('user ready');
+    this.signedIn=true;
     this.requestUpdate();
     this.pageChanged(window.location.pathname);
+    //render(this.drawerMenu(),this.shadowRoot.getElementById("drawer-menu"))
     
+  }
+
+  onUserLogout(e){
+        this.signedIn=false;  
+        console.log('user logout');
+        this.requestUpdate();
   }
 
   endEdit(e) {

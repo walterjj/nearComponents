@@ -161,7 +161,7 @@ export class NearUser extends LitElement {
     return {
       name: { type: String },
       state: {type: Number},
-      current: {type: CognitoUser},
+      currentUser: {type: CognitoUser},
       poolId: {type: String},
       clientId:{type: String},
       baseURL:{type: String},
@@ -383,6 +383,8 @@ export class NearUser extends LitElement {
       if(propName=="name") { 
           var el= this.shadowRoot.getElementById("name_button");
           if (el) el.label=this.nameInitials();
+      }
+      else if(propName=="currentUser") { 
       }
     });
   }
@@ -663,7 +665,7 @@ export class NearUser extends LitElement {
 
   doAction(e) {
       console.log("doAction");
-      this.doUpload();
+      //this.doUpload();
        //this.getResources("/resources/").then((data)=>{console.log(data)});
        //if(this.canEdit) console.log(this.buildPage(window.location.pathname));
        //this.getDocumentsByKey("test"); //all documentes by sub
@@ -1079,7 +1081,13 @@ export class NearUser extends LitElement {
     this.session=null;
     this.userAttributes=null;
     this.picture=null;
-    this.pictureFile=null
+    this.pictureFile=null;
+    this.groups=null;
+    let event = new CustomEvent('user-logout', { 
+      detail: {  },
+      bubbles: true, 
+      composed: true });
+    this.dispatchEvent(event);
   }
 
   changeName(e) {
@@ -1156,6 +1164,7 @@ export class NearUser extends LitElement {
         }); 
         this.userAttributes=result;
         this.state=status.LOGGED;
+        this.groups=cognitoUser.signInUserSession.accessToken.payload['cognito:groups'];
         this.requestUpdate();
         let event = new CustomEvent('user-ready', { 
           detail: {  },
