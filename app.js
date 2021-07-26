@@ -536,6 +536,12 @@ export class NearApp extends LitElement {
         //return(path!=="/"? path+'.json': '/index.json');
   }
 
+  importComponent(name){
+        let match=window.decodeURIComponent(window.location.pathname).match(/.*\//);  
+        let folder=match ? match[0] : '' ;
+        console.log("importComponent ", NearUser.instance.baseURL+folder+name+'.js' ) 
+        return import(NearUser.instance.baseURL+folder+name+'.js');
+  }
 
   firstUpdated(){
         document.body.removeAttribute('unresolved');  
