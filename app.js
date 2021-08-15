@@ -4,29 +4,29 @@
 */
 
 
-import {Drawer} from '@material/mwc-drawer'
-import {TopAppBarFixed} from '@material/mwc-top-app-bar-fixed'
+import { Drawer } from '@material/mwc-drawer'
+import { TopAppBarFixed } from '@material/mwc-top-app-bar-fixed'
 
-import {IconButton} from '@material/mwc-icon-button'
-import {Icon} from '@material/mwc-icon'
-
-
+import { IconButton } from '@material/mwc-icon-button'
+import { Icon } from '@material/mwc-icon'
 
 
-import  {NearUser} from "./user.js";
-import {NearMenu} from './menu.js'
-import {LitElement, html, css } from 'lit-element';
-import {render} from 'lit-html';
-import {NearLocation, NearRoute} from './route.js';
-import {NearContent} from  './content.js'
-import {NearArticle} from  './article.js'
+
+
+import { NearUser } from "./user.js";
+import './menu2.js'
+import { LitElement, html, css } from 'lit-element';
+import { render } from 'lit-html';
+import { NearLocation, NearRoute } from './route.js';
+import { NearContent } from './content.js'
+import { NearArticle } from './article.js'
 
 
 export class NearApp extends LitElement {
 
 
-  static get styles() {
-        return css`
+        static get styles() {
+                return css`
   
                 :host {
                         --swiper-right: 2em;
@@ -73,20 +73,22 @@ export class NearApp extends LitElement {
                         @apply --layout-horizontal;
                 }
 
-                .tabs > a {
+                .tabs > a, .topbar-item {
                         margin: 12px 16px 12px;
                         border-bottom: 1px solid #fff8;
                         display:inline-block;
                         position:relative;
+                        cursor:pointer;
                         text-decoration: none;
                         color:white;
+                        font-variant-caps:small-caps !important;
                 }
   
                 near-selector > a.near-selected {
                         border-bottom:solid 1px #fff2;
                 }
 
-                .tabs > a:hover{ color:#fffc;}
+                .tabs > a:hover, .topbar-item:hover{ color:#fffc;}
 
                 #pages {
                         border-bottom:solid  1px #8884;
@@ -174,19 +176,21 @@ export class NearApp extends LitElement {
                 
                 .drawer-content div > a{
                         display:block;
-                        text-align:right;
+                        text-align:left;
+                        margin-left:2em;
                         padding:.5em;
                         color:#555;
                         cursor:pointer;
                         text-decoration: none;
                 }
                 .drawer-content h2{
-                        font-size: 1em;
-                        text-align:right;
-                        padding:3em .5em 0 0;
-                        margin:0;
-                        color:#ccc;
-                        border-bottom: solid 1px #ccc;
+                        font-size: 1.2em;
+                        font-weight:300;
+                        text-align:left;
+                        margin-left:1em;
+                        acolor:#ccc;
+                        text-transform:Capitalize;
+                        aborder-bottom: solid 1px #ccc;
                 }
 
                 .main-contentsection {
@@ -392,50 +396,105 @@ export class NearApp extends LitElement {
                 
         `;
 
-  }
+        }
+        renderDrawerItem(item) {
+                return html`
+                        <a is="near-route" href="${item.href}">${item.label}</a>
+                `
+        }
+        renderDrawerList(item) {
+                return html`
+                        <h2>${item.label}</h2>
+                        ${item.items?.map(item => {
+                        return this.renderDrawerItem(item)
+                })}
+                <div style="width:100%; border-top:solid 1px rgb(204, 204, 204); margin:2em 0 2em 0;"></div>
+                `
+        }
 
- 
+        renderMenuItem(item) {
+                return html`
+                <a class="topbar-item" is="near-route" href="${item.href}">${item.label}</a>
+        `
+        }
 
-  pageMenu(){
-        if(NearUser.canCreate() || NearUser.canEdit())
-         return html`
+        renderMenuList(item) {
+                return html`
+                
+               
+                        <near-menu2 style="--background-color:#999999">
+                                 <a class="topbar-item" slot="title">${item.label}</a>
+                                ${item.items?.map(item => {
+                                        return html`
+                                        <div>
+                                        <a class="topbar-item" style="color:white" is="near-route" href="${item.href}">${item.label}</a>
+                                        </div>
+                                        `
+                                        
+                                })}
+                        </near-menu2>
+        `
+        }
+
+        drawerMenu() {
+                return html`
+        
+                ${this.navigationMenu?.items?.map(item => {
+                        return item.items ? this.renderDrawerList(item) : this.renderDrawerItem(item)
+                })}
+               
+          `;
+        }
+
+        menu() {
+                return html`
+        
+                ${this.navigationMenu?.items?.map(item => {
+                        return item.items ? this.renderMenuList(item) : this.renderMenuItem(item)
+                })}
+          `;
+        }
+
+        pageMenu() {
+                if (NearUser.canCreate() || NearUser.canEdit())
+                        return html`
           <a name="edit" href="#" @click="${this.openMenu}" >Edit...
             <near-menu id="edit-menu">
             <near-list>
-            ${NearUser.canCreate()?
-            html`<near-list-item @click="${this.newArticle}"  label="New Article..."></near-list-item>
+            ${NearUser.canCreate() ?
+                                        html`<near-list-item @click="${this.newArticle}"  label="New Article..."></near-list-item>
             <near-list-item @click="${this.articles}" label="Articles..."></near-list-item>
             ` : ''}
 
-            ${NearUser.canEdit()?
-            html`<hr>
+            ${NearUser.canEdit() ?
+                                        html`<hr>
             <near-list-item @click="${this.editMeta}"  label="Edit Meta..."></near-list-item>
-            `:''}
+            `: ''}
  
-            ${NearUser.canAdmin()?
-            html`
+            ${NearUser.canAdmin() ?
+                                        html`
             <hr>
             admin
             <near-list-item @click="${this.newContent}"  label="New Content..."></near-list-item>
             <near-list-item @click="${this.invalidate}" label="Clear CDN Cache"></near-list-item>
             `
-            :''}
+                                        : ''}
                
             </near-list>  
             </near-menu></a>
          `
-        return ''        
+                return ''
 
-  }
-  
-  userExtra(){}
+        }
 
-  topBarTitle(){
-    return html`${this.title}`;      
-  }
+        userExtra() { }
 
-  renderTopBar(){
-          return html`<mwc-top-app-bar-fixed dense class="toolbar">
+        topBarTitle() {
+                return html`${this.title}`;
+        }
+
+        renderTopBar() {
+                return html`<mwc-top-app-bar-fixed dense class="toolbar">
           <mwc-icon-button slot="navigationIcon" icon="menu" @click="${this.handleNavigationClick}"></mwc-icon-button>
           <div slot="title">${this.topBarTitle()}</div>
   
@@ -444,7 +503,6 @@ export class NearApp extends LitElement {
           ${this.pageMenu()}
           ${this.userExtra()}  
           </near-selector>
-          
           <near-user 
           slot="actionItems"
           poolId="${this.poolId}"
@@ -459,12 +517,12 @@ export class NearApp extends LitElement {
           >user</near-user> 
 
           </mwc-top-app-bar-fixed>`
-  }
+        }
 
-  render() {
-    
-        return html`
-        ${this.fixedTopBar? this.renderTopBar():""}
+        render() {
+
+                return html`
+        ${this.fixedTopBar ? this.renderTopBar() : ""}
         <mwc-drawer id="drawer" nhasHeader  @MDCDrawer:opened="${this.drawerOpened}" @MDCDrawer:closed="${this.drawerClosed}" type="modal" nclick="${this.closeDrawer}">
         <span slot="title">${this.topBarTitle()}</span>
         <span slot="subtitle"></span>
@@ -475,7 +533,7 @@ export class NearApp extends LitElement {
                 </div>
         </div> 
         <div id="app-content" slot="appContent">
-        ${this.fixedTopBar? "": this.renderTopBar()}         
+        ${this.fixedTopBar ? "" : this.renderTopBar()}         
                 <div class="main-content">     
                 ${this.internalPage()}
                 
@@ -483,478 +541,479 @@ export class NearApp extends LitElement {
                 <site-footer></site-footer> 
         </div>
         </mwc-drawer>`
-   
-  }
 
-  static get properties() {
-    return {
-      page: {
-        type: String,
-        reflectToAttribute: true
-      },
-      mode:{
-        type:String,
-        value:"home"
-
-      },
-      routeData: Object,
-      fixedTopBar:{ 
-              type: Boolean,
-              default:false
-        },
-      subroute: Object,
-      signedLoad: {
-              type:Boolean,
-              default: true
-      },
-      signedIn: {
-        type:Boolean,
-        default: false
-      }
-    };
-  }
-
-  
-
-  constructor() {
-          super();
-          this.signedLoad=true;
-          this.addEventListener("end-edit",this.endEdit.bind(this));
-          
-  }
-
-  contentFile(path){
-        //console.log(path!=="/"? path+'.h': '/index.h')
-        if(path.endsWith(".html")) return path.slice(0,-5)+'.h'; 
-        return(path.endsWith("/") ? path+'index.h': path+'.h');
-  }
-
-  propsFile(path){
-        //console.log(path!=="/"? path+'.h': '/index.h')
-        if(path.endsWith(".html")) return path.slice(0,-5)+'.json'; 
-        return(path.endsWith("/") ? path+'index.json': path+'.json'); 
-        //return(path!=="/"? path+'.json': '/index.json');
-  }
-
-  importComponent(name){
-        let match=window.decodeURIComponent(window.location.pathname).match(/.*\//);  
-        let folder=match ? match[0] : '' ;
-        console.log("importComponent ", NearUser.instance.baseURL+folder+name+'.js' ) 
-        return import(NearUser.instance.baseURL+folder+name+'.js');
-  }
-
-  firstUpdated(){
-        document.body.removeAttribute('unresolved');  
-        this.nearLocation=new NearLocation(
-                this.routePageChanged.bind(this),
-                this.hashChanged.bind(this));
-        //this.pageChanged(this.page);
-        if(this.convertible) {
-                window.onresize=this.checkConvertible.bind(this);
-                setTimeout((()=>{this.checkConvertible()}).bind(this),500); 
-        }
-               
-  }
-
-  checkConvertible(){
-          
-          let drawer=this.shadowRoot.getElementById("drawer");
-          if(drawer){
-                console.log("resize");  
-                if(window.innerWidth >= 800) {
-                        drawer.setAttribute("type","dismissible");
-                        drawer.removeEventListener("click", this.closeDrawer.bind(this));
-                        drawer.shadowRoot.querySelector("aside").style.position="fixed";
-                        this.drawerStatic=true;
-                        this.openDrawer();
-                        //this.fixToolbar();                        
-                  }
-                  else  {
-                        this.shadowRoot.getElementById("drawer").setAttribute("type","modal");
-                        drawer.addEventListener("click", this.closeDrawer.bind(this));
-                        this.drawerStatic=false;
-                        this.closeDrawer();
-                        //this.fixToolbar(); 
-                  }
-          }
-
-  }
-
-  updated() {
-        super.updated();
-        //this.pageChanged(this.page);
-   }
-
-  hashChanged(nearLocation) {
-        return;  
-        let element=this.shadowRoot.getElementById(nearLocation.hash);
-        if(element)
-                element.scrollIntoView({behavior:"smooth"});
-  } 
-
-  routePageChanged(nearLocation) {
-      // Show the corresponding page according to the route.
-      //
-      // If no page was found in the route data, page will be an empty string.
-      // Show 'view1' in that case. And if the page doesn't exist, show 'view404'.
-      
-      let page=nearLocation.path.slice(1); 
-      console.log('routePageChanged:'+ page );
-      if (!page) {
-        this.page = '';
-        this.mode = 'home';
-      } else if(page=="contact") {
-        this.mode ="contact"
-      }
-      else if (true || ['mission', 'leadership', 'forum', 'contact'].indexOf(page) !== -1) {
-        this.page = page;
-        this.mode = "mdsection";
-      } else {
-        this.page = 'view404';
-      }
-    
-      let drawer=this.shadowRoot.getElementById("drawer")
-      if (drawer && !this.drawerStatic) drawer.open=false;
-      window.scrollTo(0,0);
-
-      const links=this.shadowRoot.querySelectorAll("near-selector a");
-      links.forEach( link => {
-        console.log(link,window.location.pathname,link.href );      
-        if(window.location.pathname==link.getAttribute('href')|| window.location.pathname.endsWith(link.getAttribute('href')) )
-                link.classList.add('near-selected');
-        else 
-                link.classList.remove('near-selected');   
-                      
-        })
-      this.pageChanged(this.page);
-      
-  };
-  
-  onUserReady(e){
-    console.log('user ready');
-    this.signedIn=true;
-    this.requestUpdate();
-    this.pageChanged(window.location.pathname);
-    //render(this.drawerMenu(),this.shadowRoot.getElementById("drawer-menu"))
-    
-  }
-
-  onUserLogout(e){
-        this.signedIn=false;  
-        console.log('user logout');
-        this.requestUpdate();
-  }
-
-  endEdit(e) {
-    if(!NearUser.instance.canEdit()) return;       
-    const editor=document.querySelector("#content");//e.target;
-    const u=NearUser.instance;
-    let path=this.contentFile(window.decodeURIComponent(window.location.pathname));
-    console.log("write:",path)
-    let tasks=[];
-    tasks.push(u.put(path,editor.innerHTML,"text/html"));
-    if(this.metaDirty) {
-            let props=this.propsFile(window.decodeURIComponent(window.location.pathname));
-            tasks.push(u.put(props,JSON.stringify(this.meta),"text/json"));
-    }
-    
-    Promise.all(tasks).then(()=>{
-            if(this.invalidateOnEndEdit) this.buildPage();
-    })
-    .catch(e=> console.log(e));
-  }
-
-  fixLocalLinks(element=this) {
-        //const links=this.shadowRoot.querySelectorAll("a");
-        const links=element.querySelectorAll("a");
-        links.forEach( link => {
-          let href=link.getAttribute('href');
-          if(href 
-                && !href.startsWith('http') 
-                && !href.startsWith('//')
-                && !href.startsWith('#')) {
-                  link.addEventListener('click', NearRoute.prototype.clickHandler.bind(link));
-                  link.setAttribute("is","near-route");
-                }                     
-          })
-  }
-
-  makeImagesLazy(content, swapSrc=true) {
-        let lazyImages=content.querySelectorAll("img");
-
-        if ("IntersectionObserver" in window) {
-                let lazyImageObserver = new IntersectionObserver(function(entries, observer) {
-                  entries.forEach(function(entry) {
-                    if (entry.isIntersecting) {
-                      let lazyImage = entry.target;
-                      if(lazyImage.dataset.src)
-                        lazyImage.src = lazyImage.dataset.src;
-                      //lazyImage.srcset = lazyImage.dataset.srcset;
-                      lazyImage.classList.remove("lazy");
-                      lazyImageObserver.unobserve(lazyImage);
-                    }
-                  });
-                });
-            
-                lazyImages.forEach(function(lazyImage) {
-                  if(swapSrc) {
-                        lazyImage.dataset.src=lazyImage.src;
-                        lazyImage.src="data:,";   
-                  }      
-                  lazyImageObserver.observe(lazyImage);
-                });
-        }
-  }
-
-
-  onMeta(meta){
-          console.log("meta", this.meta);
-          let e;
-          if(meta.title){
-                if(e=document.querySelector('title')) e.innerHTML=meta.title;
-                if(e=document.querySelector('meta[property="og:title"]')) e.setAttribute("content",meta.title);
-          }
-          if(meta.description){ 
-                if(e=document.querySelector('meta[name="description"]')) e.setAttribute("content",meta.description);
-                if(e=document.querySelector('meta[property="og:description"]')) e.setAttribute("content",meta.description);
-          }
-          if(meta.canonical){ 
-                if(e=document.querySelector('link[rel="canonical"]')) e.setAttribute("href",meta.canonical);
-                if(e=document.querySelector('meta[property="og:url"]')) e.setAttribute("content",meta.canonical);
-          }
-          else  if(meta.url){ 
-                if(e=document.querySelector('link[rel="canonical"]')) e.setAttribute("href",meta.url);
-                if(e=document.querySelector('meta[property="og:url"]')) e.setAttribute("content",meta.url);
-          }
-          if(meta.image){ 
-                if(e=document.querySelector('meta[property="og:image"]')) e.setAttribute("content",meta.image);
-          }
-          if(meta.pages && (e=this.shadowRoot.getElementById("pages"))) {
-                  e.innerHTML="";
-                  meta.pages.forEach((page) => {
-                          let a=document.createElement("a",{is:'near-route'});
-                          a.setAttribute("href",page.filename);
-                          a.innerHTML=page.name;
-                          if(window.location.pathname.endsWith(page.filename) ||
-                            (window.location.pathname.endsWith('/') && page.filename=='index.html') )
-                                a.classList.add('near-selected');
-                          e.appendChild(a);
-                  } );
-
-          }
-          if(meta.toc && (e=this.shadowRoot.getElementById("toc"))) {
-                  e.innerHTML=meta.toc;
-          }
-          if(meta.breadcrums && (e=document.getElementById("top"))) {
-                e.innerHTML=meta.breadcrums;
-          }
-  }
-
-  onContent(content){
-        this.content=content;
-  }
-
-  initEditor(content=null){
-        import ("./editor.js");  
-        if(!content) content=document.querySelector("#content");                                                 
-        content.outerHTML='<div  id="content" is="near-editor"></div>';
-        content=document.querySelector("#content");
-        //if(NearUser.instance.canEdit()) 
-        //        this.addEventListener("end-edit",this.endEdit.bind(this));
-        return content;        
-  }
-
-  pageChanged(page) {
-        let baseURL=NearUser.instance? NearUser.instance.baseURL :"";  
-        console.log('pageChanged:'+ page );
-        if(ga){
-                (async ()=> {
-                ga('set', 'page', window.location.pathname);
-                ga('send', 'pageview');}) ();
         }
 
-        this.meta=null; this.content=null;
-        let content=document.querySelector("#content");
-        content.innerHTML="";
-        
-        if(content) {
-            let contentFile=this.contentFile(window.decodeURIComponent(window.location.pathname));
-            let propsFile=this.propsFile(window.decodeURIComponent(window.location.pathname));      
-            if(this.signedLoad && NearUser.instance.canEdit()) {
-                    console.log("via GET")
-                    NearUser.instance.get(contentFile)
-                            .then((response) => {
-                                    if(response.ok)  
-                                            response.text().then(text => {
-                                                     if(!text.startsWith("<near-")) {
-                                                        content=this.initEditor(content);                                                          
-                                                     }
-                                                     content.innerHTML=text;
-                                                     this.fixLocalLinks();
-                                                     this.hashChanged(this.nearLocation);
-                                                     content.slotUpdated();
-                                                     //setTimeout(e=>{console.log("GET OK");},1000);
-                                                });
-                                    else { 
-                                                content.innerHTML='NONONON';
-                                                content=this.initEditor(content);
-                                        }  
-                                    
-                                })
-                            .catch(error => console.log("e get",error))
-                    NearUser.instance.get(propsFile)
-                    .then((response) => {
-                            if(response.ok)  
-                                    response.json().then(meta => {
-                                            this.meta=meta;
-                                            this.onMeta(meta);    
-                                        });
-                            else this.meta={};
-                            
-                            })
-                    .catch(error => console.log("e get",error));        
-                    return;                      
-            }    
-            else fetch(NearUser.instance.baseURL+contentFile)
-            .then((response) => {
-                    if(response.ok)  
-                            response.text().then(text => {
-                                content.innerHTML=text;
-                                this.fixLocalLinks();
-                                this.makeImagesLazy(content);
-                                this.onContent(content);
-                                this.hashChanged(this.nearLocation);
-                                document.body.removeAttribute('unresolved');
-                           });
-                    else content.innerHTML='';  
-            })
-            .catch(error => console.log("e fetch",error));
-            fetch(NearUser.instance.baseURL+propsFile)
-            .then((response) => {
-                    if(response.ok){  
-                            response.json().then(meta => { 
-                                    this.meta=meta;
-                                    this.onMeta(meta);
-                                });
-                            
-                    }
-                    else this.meta={};
-                    
-            })
-            .catch(error => console.log("e fetch",error))            
-         }
-           
-  };
+        static get properties() {
+                return {
+                        page: {
+                                type: String,
+                                reflectToAttribute: true
+                        },
+                        mode: {
+                                type: String,
+                                value: "home"
 
-  handleNavigationClick() {
-    console.log("navigationClick");
-    let drawer=this.shadowRoot.getElementById("drawer")
-    if(drawer) drawer.open=!drawer.open;
-    if(ga) ga('send', 'event', 'UI', 'menu', window.location.href)   
-  }
+                        },
+                        routeData: Object,
+                        fixedTopBar: {
+                                type: Boolean,
+                                default: false
+                        },
+                        subroute: Object,
+                        signedLoad: {
+                                type: Boolean,
+                                default: true
+                        },
+                        signedIn: {
+                                type: Boolean,
+                                default: false
+                        }
+                };
+        }
 
 
-  fixToolbar(){
-        let toolbar=this.shadowRoot.querySelector(".toolbar");
-        let header=toolbar.shadowRoot.querySelector("header");
-        if(!this.fixedTopBar)header.style.width= this.shadowRoot.getElementById("drawer").open && this.drawerStatic? "calc(100% - 256px)" :"100%";
-                        
-  }
 
-  drawerOpened(){
-        this.fixToolbar();
-  }
+        constructor() {
+                super();
+                this.signedLoad = true;
+                this.addEventListener("end-edit", this.endEdit.bind(this));
 
-  drawerClosed(){
-        this.fixToolbar();    
-  }
+        }
 
-  openDrawer(){
-        this.shadowRoot.getElementById("drawer").open=true;           
-  }
-  closeDrawer(){      
-        this.shadowRoot.getElementById("drawer").open=false;        
-  }
+        contentFile(path) {
+                //console.log(path!=="/"? path+'.h': '/index.h')
+                if (path.endsWith(".html")) return path.slice(0, -5) + '.h';
+                return (path.endsWith("/") ? path + 'index.h' : path + '.h');
+        }
 
+        propsFile(path) {
+                //console.log(path!=="/"? path+'.h': '/index.h')
+                if (path.endsWith(".html")) return path.slice(0, -5) + '.json';
+                return (path.endsWith("/") ? path + 'index.json' : path + '.json');
+                //return(path!=="/"? path+'.json': '/index.json');
+        }
 
-  openMenuByName(name){
-        let menu=this.shadowRoot.getElementById(name+'-menu');
-        menu && menu.toggleMenu();
-            
-  }
-  openMenu(e){
-        this.openMenuByName(e.target.name);      
-  }
+        importComponent(name) {
+                let match = window.decodeURIComponent(window.location.pathname).match(/.*\//);
+                let folder = match ? match[0] : '';
+                console.log("importComponent ", NearUser.instance.baseURL + folder + name + '.js')
+                return import(NearUser.instance.baseURL + folder + name + '.js');
+        }
 
-  buildPage(e){
-        if(NearUser.instance && NearUser.instance.canEdit()) {
-                NearUser.instance.buildPage(window.location.pathname).then(()=>{
-                        if(this.invalidateOnEndEdit) this.invalidate();
+        firstUpdated() {
+                document.body.removeAttribute('unresolved');
+                this.nearLocation = new NearLocation(
+                        this.routePageChanged.bind(this),
+                        this.hashChanged.bind(this));
+                //this.pageChanged(this.page);
+                if (this.convertible) {
+                        window.onresize = this.checkConvertible.bind(this);
+                        setTimeout((() => { this.checkConvertible() }).bind(this), 500);
+                }
+
+        }
+
+        checkConvertible() {
+
+                let drawer = this.shadowRoot.getElementById("drawer");
+                if (drawer) {
+                        console.log("resize");
+                        if (window.innerWidth >= 800) {
+                                drawer.setAttribute("type", "dismissible");
+                                drawer.removeEventListener("click", this.closeDrawer.bind(this));
+                                drawer.shadowRoot.querySelector("aside").style.position = "fixed";
+                                this.drawerStatic = true;
+                                this.openDrawer();
+                                //this.fixToolbar();                        
+                        }
+                        else {
+                                this.shadowRoot.getElementById("drawer").setAttribute("type", "modal");
+                                drawer.addEventListener("click", this.closeDrawer.bind(this));
+                                this.drawerStatic = false;
+                                this.closeDrawer();
+                                //this.fixToolbar(); 
+                        }
+                }
+
+        }
+
+        updated() {
+                super.updated();
+                //this.pageChanged(this.page);
+        }
+
+        hashChanged(nearLocation) {
+                return;
+                let element = this.shadowRoot.getElementById(nearLocation.hash);
+                if (element)
+                        element.scrollIntoView({ behavior: "smooth" });
+        }
+
+        routePageChanged(nearLocation) {
+                // Show the corresponding page according to the route.
+                //
+                // If no page was found in the route data, page will be an empty string.
+                // Show 'view1' in that case. And if the page doesn't exist, show 'view404'.
+
+                let page = nearLocation.path.slice(1);
+                console.log('routePageChanged:' + page);
+                if (!page) {
+                        this.page = '';
+                        this.mode = 'home';
+                } else if (page == "contact") {
+                        this.mode = "contact"
+                }
+                else if (true || ['mission', 'leadership', 'forum', 'contact'].indexOf(page) !== -1) {
+                        this.page = page;
+                        this.mode = "mdsection";
+                } else {
+                        this.page = 'view404';
+                }
+
+                let drawer = this.shadowRoot.getElementById("drawer")
+                if (drawer && !this.drawerStatic) drawer.open = false;
+                window.scrollTo(0, 0);
+
+                const links = this.shadowRoot.querySelectorAll("near-selector a");
+                links.forEach(link => {
+                        console.log(link, window.location.pathname, link.href);
+                        if (window.location.pathname == link.getAttribute('href') || window.location.pathname.endsWith(link.getAttribute('href')))
+                                link.classList.add('near-selected');
+                        else
+                                link.classList.remove('near-selected');
+
                 })
-                .catch(e=> console.log(e));;
-                console.log("buildPage");
+                this.pageChanged(this.page);
+
+        };
+
+        onUserReady(e) {
+                console.log('user ready');
+                this.signedIn = true;
+                this.requestUpdate();
+                this.pageChanged(window.location.pathname);
+                //render(this.drawerMenu(),this.shadowRoot.getElementById("drawer-menu"))
+
         }
-  }
 
-
-  newContent(e){
-        let el=new NearContent();
-        el.editonly=true;
-        el.editing=true;
-        el.addEventListener('content-create', (e)=>{
-                console.log(e);
-                let content=e.detail;
-                content.close();
-                window.location.pathname=content.key;
-        })
-        document.body.appendChild(el);
-
-  }
-
-  newArticle(e){
-        let el=new NearArticle();
-        el.editonly=true;
-        el.editing=true;
-        el.addEventListener('content-create', (e)=>{
-                console.log(e);
-                let content=e.detail;
-                content.close();
-                window.location.pathname=content.key;
-        })
-        document.body.appendChild(el);
-
-  }
-  
-  editMeta(e){
-        let el=null;
-        if(this.meta && this.meta.type=="article")
-              el=new NearArticle();
-        else      
-              el=new NearContent();
-        el.key=window.location.pathname;
-        el.editonly=true;
-        el.editing=true;
-        el.addEventListener('content-edited', this.buildPage)
-        document.body.appendChild(el);
-  }
-
-  invalidate(e) {
-        if(NearUser.instance && NearUser.instance.canEdit()) {
-                let path=window.location.pathname;
-                if(path.endsWith(".html"))
-                        path=path.slice(0,-5);
-                path+="*";
-                console.log("try to invalidate",path);        
-                NearUser.instance.invalidate(path).then((json)=>{
-                        console.log("invalidate",json);
-                        alert(`Cache cleared for ${path}`);
-                });
+        onUserLogout(e) {
+                this.signedIn = false;
+                console.log('user logout');
+                this.requestUpdate();
         }
-  }
 
-  navigate(href) {
-          NearRoute.navigate(href);
-  }
+        endEdit(e) {
+                if (!NearUser.instance.canEdit()) return;
+                const editor = document.querySelector("#content");//e.target;
+                const u = NearUser.instance;
+                let path = this.contentFile(window.decodeURIComponent(window.location.pathname));
+                console.log("write:", path)
+                let tasks = [];
+                tasks.push(u.put(path, editor.innerHTML, "text/html"));
+                if (this.metaDirty) {
+                        let props = this.propsFile(window.decodeURIComponent(window.location.pathname));
+                        tasks.push(u.put(props, JSON.stringify(this.meta), "text/json"));
+                }
+
+                Promise.all(tasks).then(() => {
+                        if (this.invalidateOnEndEdit) this.buildPage();
+                })
+                        .catch(e => console.log(e));
+        }
+
+        fixLocalLinks(element = this) {
+                //const links=this.shadowRoot.querySelectorAll("a");
+                const links = element.querySelectorAll("a");
+                links.forEach(link => {
+                        let href = link.getAttribute('href');
+                        if (href
+                                && !href.startsWith('http')
+                                && !href.startsWith('//')
+                                && !href.startsWith('#')) {
+                                link.addEventListener('click', NearRoute.prototype.clickHandler.bind(link));
+                                link.setAttribute("is", "near-route");
+                        }
+                })
+        }
+
+        makeImagesLazy(content, swapSrc = true) {
+                let lazyImages = content.querySelectorAll("img");
+
+                if ("IntersectionObserver" in window) {
+                        let lazyImageObserver = new IntersectionObserver(function (entries, observer) {
+                                entries.forEach(function (entry) {
+                                        if (entry.isIntersecting) {
+                                                let lazyImage = entry.target;
+                                                if (lazyImage.dataset.src)
+                                                        lazyImage.src = lazyImage.dataset.src;
+                                                //lazyImage.srcset = lazyImage.dataset.srcset;
+                                                lazyImage.classList.remove("lazy");
+                                                lazyImageObserver.unobserve(lazyImage);
+                                        }
+                                });
+                        });
+
+                        lazyImages.forEach(function (lazyImage) {
+                                if (swapSrc) {
+                                        lazyImage.dataset.src = lazyImage.src;
+                                        lazyImage.src = "data:,";
+                                }
+                                lazyImageObserver.observe(lazyImage);
+                        });
+                }
+        }
+
+
+        onMeta(meta) {
+                console.log("meta", this.meta);
+                let e;
+                if (meta.title) {
+                        if (e = document.querySelector('title')) e.innerHTML = meta.title;
+                        if (e = document.querySelector('meta[property="og:title"]')) e.setAttribute("content", meta.title);
+                }
+                if (meta.description) {
+                        if (e = document.querySelector('meta[name="description"]')) e.setAttribute("content", meta.description);
+                        if (e = document.querySelector('meta[property="og:description"]')) e.setAttribute("content", meta.description);
+                }
+                if (meta.canonical) {
+                        if (e = document.querySelector('link[rel="canonical"]')) e.setAttribute("href", meta.canonical);
+                        if (e = document.querySelector('meta[property="og:url"]')) e.setAttribute("content", meta.canonical);
+                }
+                else if (meta.url) {
+                        if (e = document.querySelector('link[rel="canonical"]')) e.setAttribute("href", meta.url);
+                        if (e = document.querySelector('meta[property="og:url"]')) e.setAttribute("content", meta.url);
+                }
+                if (meta.image) {
+                        if (e = document.querySelector('meta[property="og:image"]')) e.setAttribute("content", meta.image);
+                }
+                if (meta.pages && (e = this.shadowRoot.getElementById("pages"))) {
+                        e.innerHTML = "";
+                        meta.pages.forEach((page) => {
+                                let a = document.createElement("a", { is: 'near-route' });
+                                a.setAttribute("href", page.filename);
+                                a.innerHTML = page.name;
+                                if (window.location.pathname.endsWith(page.filename) ||
+                                        (window.location.pathname.endsWith('/') && page.filename == 'index.html'))
+                                        a.classList.add('near-selected');
+                                e.appendChild(a);
+                        });
+
+                }
+                if (meta.toc && (e = this.shadowRoot.getElementById("toc"))) {
+                        e.innerHTML = meta.toc;
+                }
+                if (meta.breadcrums && (e = document.getElementById("top"))) {
+                        e.innerHTML = meta.breadcrums;
+                }
+        }
+
+        onContent(content) {
+                this.content = content;
+        }
+
+        initEditor(content = null) {
+                import("./editor.js");
+                if (!content) content = document.querySelector("#content");
+                content.outerHTML = '<div  id="content" is="near-editor"></div>';
+                content = document.querySelector("#content");
+                //if(NearUser.instance.canEdit()) 
+                //        this.addEventListener("end-edit",this.endEdit.bind(this));
+                return content;
+        }
+
+        pageChanged(page) {
+                let baseURL = NearUser.instance ? NearUser.instance.baseURL : "";
+                console.log('pageChanged:' + page);
+                if (ga) {
+                        (async () => {
+                                ga('set', 'page', window.location.pathname);
+                                ga('send', 'pageview');
+                        })();
+                }
+
+                this.meta = null; this.content = null;
+                let content = document.querySelector("#content");
+                content.innerHTML = "";
+
+                if (content) {
+                        let contentFile = this.contentFile(window.decodeURIComponent(window.location.pathname));
+                        let propsFile = this.propsFile(window.decodeURIComponent(window.location.pathname));
+                        if (this.signedLoad && NearUser.instance.canEdit()) {
+                                console.log("via GET")
+                                NearUser.instance.get(contentFile)
+                                        .then((response) => {
+                                                if (response.ok)
+                                                        response.text().then(text => {
+                                                                if (!text.startsWith("<near-")) {
+                                                                        content = this.initEditor(content);
+                                                                }
+                                                                content.innerHTML = text;
+                                                                this.fixLocalLinks();
+                                                                this.hashChanged(this.nearLocation);
+                                                                content.slotUpdated();
+                                                                //setTimeout(e=>{console.log("GET OK");},1000);
+                                                        });
+                                                else {
+                                                        content.innerHTML = 'NONONON';
+                                                        content = this.initEditor(content);
+                                                }
+
+                                        })
+                                        .catch(error => console.log("e get", error))
+                                NearUser.instance.get(propsFile)
+                                        .then((response) => {
+                                                if (response.ok)
+                                                        response.json().then(meta => {
+                                                                this.meta = meta;
+                                                                this.onMeta(meta);
+                                                        });
+                                                else this.meta = {};
+
+                                        })
+                                        .catch(error => console.log("e get", error));
+                                return;
+                        }
+                        else fetch(NearUser.instance.baseURL + contentFile)
+                                .then((response) => {
+                                        if (response.ok)
+                                                response.text().then(text => {
+                                                        content.innerHTML = text;
+                                                        this.fixLocalLinks();
+                                                        this.makeImagesLazy(content);
+                                                        this.onContent(content);
+                                                        this.hashChanged(this.nearLocation);
+                                                        document.body.removeAttribute('unresolved');
+                                                });
+                                        else content.innerHTML = '';
+                                })
+                                .catch(error => console.log("e fetch", error));
+                        fetch(NearUser.instance.baseURL + propsFile)
+                                .then((response) => {
+                                        if (response.ok) {
+                                                response.json().then(meta => {
+                                                        this.meta = meta;
+                                                        this.onMeta(meta);
+                                                });
+
+                                        }
+                                        else this.meta = {};
+
+                                })
+                                .catch(error => console.log("e fetch", error))
+                }
+
+        };
+
+        handleNavigationClick() {
+                console.log("navigationClick");
+                let drawer = this.shadowRoot.getElementById("drawer")
+                if (drawer) drawer.open = !drawer.open;
+                if (ga) ga('send', 'event', 'UI', 'menu', window.location.href)
+        }
+
+
+        fixToolbar() {
+                let toolbar = this.shadowRoot.querySelector(".toolbar");
+                let header = toolbar.shadowRoot.querySelector("header");
+                if (!this.fixedTopBar) header.style.width = this.shadowRoot.getElementById("drawer").open && this.drawerStatic ? "calc(100% - 256px)" : "100%";
+
+        }
+
+        drawerOpened() {
+                this.fixToolbar();
+        }
+
+        drawerClosed() {
+                this.fixToolbar();
+        }
+
+        openDrawer() {
+                this.shadowRoot.getElementById("drawer").open = true;
+        }
+        closeDrawer() {
+                this.shadowRoot.getElementById("drawer").open = false;
+        }
+
+
+        openMenuByName(name) {
+                let menu = this.shadowRoot.getElementById(name + '-menu');
+                menu && menu.toggleMenu();
+
+        }
+        openMenu(e) {
+                this.openMenuByName(e.target.name);
+        }
+
+        buildPage(e) {
+                if (NearUser.instance && NearUser.instance.canEdit()) {
+                        NearUser.instance.buildPage(window.location.pathname).then(() => {
+                                if (this.invalidateOnEndEdit) this.invalidate();
+                        })
+                                .catch(e => console.log(e));;
+                        console.log("buildPage");
+                }
+        }
+
+
+        newContent(e) {
+                let el = new NearContent();
+                el.editonly = true;
+                el.editing = true;
+                el.addEventListener('content-create', (e) => {
+                        console.log(e);
+                        let content = e.detail;
+                        content.close();
+                        window.location.pathname = content.key;
+                })
+                document.body.appendChild(el);
+
+        }
+
+        newArticle(e) {
+                let el = new NearArticle();
+                el.editonly = true;
+                el.editing = true;
+                el.addEventListener('content-create', (e) => {
+                        console.log(e);
+                        let content = e.detail;
+                        content.close();
+                        window.location.pathname = content.key;
+                })
+                document.body.appendChild(el);
+
+        }
+
+        editMeta(e) {
+                let el = null;
+                if (this.meta && this.meta.type == "article")
+                        el = new NearArticle();
+                else
+                        el = new NearContent();
+                el.key = window.location.pathname;
+                el.editonly = true;
+                el.editing = true;
+                el.addEventListener('content-edited', this.buildPage)
+                document.body.appendChild(el);
+        }
+
+        invalidate(e) {
+                if (NearUser.instance && NearUser.instance.canEdit()) {
+                        let path = window.location.pathname;
+                        if (path.endsWith(".html"))
+                                path = path.slice(0, -5);
+                        path += "*";
+                        console.log("try to invalidate", path);
+                        NearUser.instance.invalidate(path).then((json) => {
+                                console.log("invalidate", json);
+                                alert(`Cache cleared for ${path}`);
+                        });
+                }
+        }
+
+        navigate(href) {
+                NearRoute.navigate(href);
+        }
 
 }
 
