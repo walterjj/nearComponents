@@ -139,7 +139,7 @@ export class NearUser extends LitElement {
       }
       #name_button {
         padding:0; 
-        height:56px; width:56px;     
+        height:2em; width:2em;     
         font-size:20px;
         border:none;
         background-color:#ffffff80;
@@ -643,7 +643,7 @@ export class NearUser extends LitElement {
     };
     if (this.state== status.ANONIMOUS) {
       let label= this.signInLabel || i18n('Sign in');
-      return html`<mwc-button class="inverse" dense @click="${()=>{this.state=status.SIGNIN}}" label="${label}" icon="person" trailingicon=""></mwc-button>
+      return html`<mwc-button class="inverse" dense @click="${()=>{this.state=status.SIGNIN}}" label="${label}" icon="person" trailingicon></mwc-button>
       `;
     }
     else if(this.state == status.FORCED_CHANGEPSW) 

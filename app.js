@@ -503,7 +503,8 @@ export class NearApp extends LitElement {
           ${this.pageMenu()}
           ${this.userExtra()}  
           </near-selector>
-          <near-user 
+          <near-user
+          style="padding:1em;" 
           slot="actionItems"
           poolId="${this.poolId}"
           clientId="${this.clientId}"
@@ -851,7 +852,7 @@ export class NearApp extends LitElement {
                                                                 content.innerHTML = text;
                                                                 this.fixLocalLinks();
                                                                 this.hashChanged(this.nearLocation);
-                                                                content.slotUpdated();
+                                                                if(content.slotUpdated) content.slotUpdated();
                                                                 //setTimeout(e=>{console.log("GET OK");},1000);
                                                         });
                                                 else {
