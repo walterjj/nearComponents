@@ -9,7 +9,7 @@
     "serve_prod": "es-dev-server -n --preserve-symlinks --open ru/",
     "build": "./build.sh"
   },
-  "bundleDependencies": false,
+  "bundledDependencies": [],
   "dependencies": {
     "@material/mwc-base": "latest",
     "@material/mwc-button": "latest",

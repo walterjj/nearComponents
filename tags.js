@@ -1,5 +1,5 @@
 import { LitElement, html, css } from 'lit-element';
-import { Template } from 'lit-html';
+//import { Template } from 'lit-html';
 import { NearUser } from './user';
 import {Icon} from "@material/mwc-icon"
 export class NearTags extends LitElement {
