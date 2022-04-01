@@ -914,7 +914,7 @@ export class NearEditor extends HTMLDivElement {
     }
 
     render(){
- 
+        
       return html`
       <style>
       :host{display:block}
@@ -931,6 +931,7 @@ export class NearEditor extends HTMLDivElement {
       ${NearUser.canEdit()?
       html` 
        <div class="editBar">
+       
         
         ${this.editing? 
         html`
@@ -946,10 +947,11 @@ export class NearEditor extends HTMLDivElement {
     }
 
     requestUpdate(){
-        render(this.render(),this.shadowRoot, {eventContext:this, scopeName: "near-editor" });
+        render(this.render(),this.shadowRoot, {eventContext:this, host:this scopeName: "near-editor" });
     }
 
     startEdit(){
+        console.log(this.constructor.name)
         this.editing=true;
         this.editFields();
         this.requestUpdate();

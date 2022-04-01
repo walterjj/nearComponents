@@ -23,7 +23,7 @@ export class NearContent extends LitElement{
                   key: { type: String, reflect: true },
                   editing: {type: Boolean,  reflect: true},
                   editonly: {type: Boolean,  reflect: true},
-                  o:{type:Object}
+                  obj:{type:Object}
                 };
         }
 
@@ -42,7 +42,8 @@ export class NearContent extends LitElement{
                 if(o.video) this.video= o.video;
                 if(o.author) this.author= o.author;
                 if(o.search) this.search= o.search;
-                this.o=o;
+                if(o.meta) this.meta= o.meta;
+                this.obj=o;
                 this.requestUpdate();
         }
 
@@ -137,7 +138,7 @@ export class NearContent extends LitElement{
 
         editForm(){
                 if(this.editing) {
-                        if(!this.o) this.loadJson();
+                        if(!this.obj) this.loadJson();
                         return html`
                         <near-modal>
                         <div>
@@ -163,6 +164,10 @@ export class NearContent extends LitElement{
                         <input name="search" id="search" 
                                 @input="${this.handleInput}"
                                 type="text" .value="${this.search || ''}" autofocus>
+                        </label>
+                        <label>
+                        meta
+                        <textarea id="meta" @input="${this.handleInput}" >${this.meta || ''}</textarea>
                         </label>
                         ${this.extraFields()}
                         <form-actions>
@@ -229,7 +234,8 @@ export class NearContent extends LitElement{
                 }
                 if(this.search) o.search=this.search;
                 if(this.image) o.image=this.image;
-                if(this.video) o.video=this.video;        
+                if(this.video) o.video=this.video;
+                if(this.meta) o.meta=this.meta;        
                 return o;
         }
 
@@ -324,6 +330,7 @@ export class NearContent extends LitElement{
                 this.title=this.shadowRoot.getElementById("title").value;
                 this.description=this.shadowRoot.getElementById("description").value;
                 this.search=this.shadowRoot.getElementById("search").value;
+                this.meta=this.shadowRoot.getElementById("meta").value;
                 this.startPending();
                 this.putMeta()
                 .then(()=>{
@@ -644,34 +651,34 @@ export class NearContentsSelect extends NearContents {
                 this.documents.forEach((item)=>{
                          if(this.selected && item.id==this.selected) {
                                 r.push(html`<option value="${item.id}" selected>${item.title}</option>`);
-                                this.o=item;
+                                this.obj=item;
                                 hasSelected=true;
                         } 
                         else
                                 r.push(html`<option value="${item.id}">${item.title}</option>`); 
                 }); 
                 if(!hasSelected) {
-                        this.o=this.documents[0];
+                        this.obj=this.documents[0];
                         //this.dispatchEvent(new CustomEvent("content-selected",{detail:this}))
                 }                   
                 return r;
         }
 
         get value(){
-                return this.o;
+                return this.obj;
         }
 
         getValue(){
-                return this.o;
+                return this.obj;
         }
 
         handleInput(){
                 let select=this.shadowRoot.getElementById("select");
                 this.selected=select.value;
                 if(select.selectedIndex >=0)
-                        this.o=this.documents[select.selectedIndex]
+                        this.obj=this.documents[select.selectedIndex]
                 else
-                        this.o=null;
+                        this.obj=null;
                 this.dispatchEvent(new CustomEvent("content-selected",{detail:this}));                
         }
         render() {
