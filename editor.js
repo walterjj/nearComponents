@@ -947,7 +947,7 @@ export class NearEditor extends HTMLDivElement {
     }
 
     requestUpdate(){
-        render(this.render(),this.shadowRoot, {eventContext:this, host:this scopeName: "near-editor" });
+        render(this.render(),this.shadowRoot, {eventContext:this, host:this, scopeName: "near-editor" });
     }
 
     startEdit(){
