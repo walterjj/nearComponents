@@ -2,278 +2,606 @@
 
 import { LitElement, html, css} from 'lit-element';
 
+import {NearMqtt} from "./pubsub.js";
+
+let signaling= null;
+
+export class Signaling extends NearMqtt {
+	
+	sessionId = '';
+	listeners = [];
+	timerId = 0;
+
+	constructor() {
+		super();
+		Signaling.instance = this;
+		signaling = this;
+	}
+
+	send(to, command, data = {}, action = '') {
+		return new Promise((resolve, reject) => {
+
+			let message = {
+				'command': command,
+				//'message': json,
+				'sessionID': this.sessionId,
+				'to': to,
+				'from': this.clientId
+			}
+			Object.assign(message, data);
+
+			console.log("send:", command, message)			
+			this.publish(`sessions/${this.sessionId}/${to}`,JSON.stringify(message));
+		});
+	};
+
+
+	on(command, callback, from = null) {
+		this.listeners.push({ command: command, callback: callback, from: from });
+	}
+
+	removeListeners(command,  from) {
+		this.listeners = this.listeners.filter(function (listener) {
+			return listener.command != command && listener.from != from;
+		});
+	}
+
+	resetListeners(){
+		this.listeners = [];
+	}
+
+	updateListeners(fromOld, fromNew) {
+		this.listeners = this.listeners.map(function (listener) {
+			if (listener.from == fromOld) {
+				listener.from = fromNew;
+			}
+			return listener;
+		});
+	}
+
+
+	setupEvents(){
+		super.setupEvents();
+		this.client.on('connect', function () {
+                        console.log('connect ', this.sessionId, '/',this.clientId);
+                        this.connected=true;
+			this.subscribe(`sessions/${this.sessionId}/${this.clientId}`);
+			this.subscribe(`sessions/${this.sessionId}/all`);
+			this.subscribe(`sessions/${this.sessionId}/backend`);
+			
+                }.bind(this));
+	}
+
+	onMessage(topic,msg,packet){
+                //console.log("recv:",topic,msg);
+		let data = JSON.parse(msg);
+		let command=data.command || '';
+		if(data.from && data.from==this.clientId)
+			return;
+		console.log('Received:',topic, data);	
+		this.listeners.forEach(listener => {
+			if (command==listener.command &&
+				(!listener.from || 
+					(data.from
+					&& listener.from==data.from
+					)
+				)) {
+				listener.callback(data);
+			}
+		});
+                super.onMessage(topic,msg,packet);
+        }
+
+	connect(sessionID, options){
+		this.sessionId = sessionID	
+		console.log('Connecting to MQTT');
+                // validar clientId.
+		return super.connect(options);
+	}
+
+	connect(sessionId, options){
+		this.sessionId = sessionId
+		if(!options) options={
+                        reconnectPeriod: 10000,
+                        clientId : 'nearuser_' + Math.random().toString(16).substr(2, 8)
+                };
+		options.reconnectPeriod= options.reconnectPeriod || 10000;
+                this.clientId=options.clientId;	
+		options.will={
+			topic:`sessions/${sessionId}/all`,
+			payload:`{
+				"command":"peerDisconnected",
+				"from":"${this.clientId}"
+			}`,
+			qos:1,
+			retain:false
+		}
+		console.log('Connecting to MQTT');
+		return super.connect(options);
+	}
+
+
+	disconnect(){
+		console.log('Disconnect')
+		/*if (timerId) {  
+			clearTimeout(timerId);
+			timerId = 0;  
+		} */ 
+		this.end();
+	}
+
+	keepAlive() { 
+		var timeout = 20000;  
+		timerId = setTimeout(keepAlive, timeout);  
+	}  
+	
+}
+
+Signaling.instance=null;
+Signaling.getInstance= () => {
+	return( Signaling.instance || (Signaling.instance=new Signaling())) 
+}
+
+customElements.define("near-signaling",Signaling);
+
+//----------------------------------------------------------
+// PeerConnection
+
+
+
+
+let iceServers=[
+	{ urls: [
+		"stun:stun.l.google.com:19302",
+		"stun:stun1.l.google.com:19302",
+		"stun:stun2.l.google.com:19302",
+		"stun:stun3.l.google.com:19302"
+		]
+	},
+	{
+	  urls: "turn:openrelay.metered.ca:80",
+	  username: "openrelayproject",
+	  credential: "openrelayproject",
+	},
+	{
+	  urls: "turn:openrelay.metered.ca:443",
+	  username: "openrelayproject",
+	  credential: "openrelayproject",
+	},
+]
+
+class PeerConnection{ 
+        
+        constructor(peerId, meet, stream=null, mediaConstraints=null) {
+		//super();
+                this.peer = null;
+                this.meet = meet;
+                this.peerConfig = {
+                        //iceTransportPolicy: "relay",
+			sdpSemantics: 'unified-plan',
+                        iceServers: iceServers || []
+                };
+                this.pcOptions = mediaConstraints || { "optional": [{ "DtlsSrtpKeyAgreement": true }] };
+                this.mediaConstraints = { offerToReceiveAudio: true, offerToReceiveVideo: true };
+                this.earlyCandidates = [];
+                this.mainChannel = null
+                this.audioChannel = null
+                this.peerId = peerId
+                this.stream=stream
+		this.setPeerId(peerId);
+		this.createPeerConnection();
+
+        }
+
+        emit(name, object) {
+                this.meet.emit(name, object);
+        }
+
+	setPeerId(id) {
+		this.peerId = id
+		signaling.on('answer', this.onAnswer.bind(this), this.peerId)
+		
+		signaling.on('addIceCandidate', this.onAddIceCandidate.bind(this), this.peerId);
+	}
+
+	setPeerType(type){
+		this.peerType = type	
+	}
+
+	setStream(s){
+		this.stream = s
+	}
+
+	addIceServers(iceServers) {
+		this.peerConfig.iceServers = this.peerConfig.iceServers.concat(iceServers);
+	}
+
+	async connect(){
+		this.createOffer();
+	}
+
+	async onAddIceCandidate(data){
+		const candidates = data.candidates
+		console.log('addIceCandidate ', this.peer.iceConnectionState);
+		//if(this.peer.iceConnectionState!="gathering") return;
+		for (let i = 0; i < candidates.length; i++) {
+			//console.log('candidate:', candidates[i])
+			this.emit("event",{ type: "ice", "candidate": candidates[i] });
+			let candidate = new RTCIceCandidate(candidates[i]);
+
+			console.log("Adding ICE candidate :" + JSON.stringify(candidate));
+			try {
+				await this.peer.addIceCandidate(candidate)
+			} catch (error) {
+				console.error("addIceCandidate error: " + JSON.stringify(error))
+			}
+		}
+	}
+
+	async disconnect(){
+		if (this.peer) {
+			this.peer.close();
+			signaling.removeListeners("addIceCandidate", this.peerId);
+			signaling.removeListeners("answer", this.peerId);  
+			this.peer = null;
+			try {
+				await signaling.send("all", "peerDisconnected", {
+					peerid: this.peerId
+				})
+				//peer.close();
+			} catch (e) {
+				console.error("Failure close peer connection:" + e);
+			} finally {
+				//peer = null;
+			}
+		}
+	}
+
+	getConnectionState(){
+		if (this.peer)
+			return this.peer.iceConnectionState;
+		else
+			return "uninitialized"
+	}
+
+
+	async onAnswer(answer){
+		console.log('onAnswer:', answer)
+		await this.onReceiveCall(answer);
+		
+	}
+
+	async onOffer(offer){
+		console.log('onOffer:', offer)
+		
+		if (this.stream) {
+			this.peer.addStream(this.stream);
+		}
+		await this.onReceiveCall(offer)
+		const answer = await this.peer.createAnswer()
+		try {
+			await this.peer.setLocalDescription(answer)
+		} catch (error) {
+			console.error('Error setLocalDescription: ', error)
+		}
+		let data={
+			sdp:answer.sdp,
+			type:answer.type
+		}
+		signaling.send(this.peerId, 'answer', data)
+	}
+
+	async createOffer(stream){
+		try {
+			
+			let peerid = this.peerId
+			if (stream) {
+				this.peer.addStream(stream);
+			}
+			this.mainChannel=this.createDataChannel("MainDataChannel");
+			// create Offer
+			const offer = await this.peer.createOffer(this.mediaConstraints)
+			console.log("Create Offer, send to ", offer, this.peerId)
+			await this.peer.setLocalDescription(offer)
+			
+			let data = { 
+				peerid: peerid,
+				sdp: offer.sdp,
+				type: offer.type
+			}
+			console.log("Local Description", data, offer)
+			signaling.send(peerid, 'call', data)
+			
+			
+		} catch (e) {
+			this.disconnect();
+			console.error("connect error: " + e);
+		}
+	}
+
+
+	createPeerConnection(){
+		console.log("createPeerConnection config: " + JSON.stringify(this.peerConfig) + " option: " + JSON.stringify(this.pcOptions));
+		this.peer = new RTCPeerConnection(this.peerConfig, this.pcOptions);
+		// clear early candidates
+		this.earlyCandidates.length = 0;
+
+		this.peer.onicecandidate = this.onIceCandidate.bind(this);
+		this.peer.ontrack =  this.onTrack.bind(this); 
+		this.peer.oniceconnectionstatechange = this.onIceConnectionStateChange.bind(this);
+		this.peer.ondatachannel = this.onDataChannel.bind(this); 
+		//this.peer.onconnectionstatechange = (event,state) => { console.log("connection state:",event,state) };
+
+
+
+		console.log("Created RTCPeerConnnection with config: " + JSON.stringify(this.peerConfig) + "option:" + JSON.stringify(this.pcOptions));
+		return this.peer;
+	}
+
+	createDataChannel(label){
+		try {
+			let dataChannel = this.peer.createDataChannel(label);
+			dataChannel.onopen = () => {
+				console.log(label + " open");
+				dataChannel.send(label + "openned");
+				this.emit("event" , {
+					"type": label,
+					"status": "ChannelOpenned"
+				});
+			}
+			dataChannel.onmessage = (evt) => {
+				console.log("datachannel recv:", evt);
+				this.emit(label, evt);
+			}
+			return dataChannel;
+		} catch (e) {
+			console.error("Cannot create datachannel error: " + e);
+			return null;
+		}
+	}
+
+        async onIceConnectionStateChange(evt){
+                this.emit(evt.type,{
+                        connectionState: (this.peer && this.peer.iceConnectionState) || "disconnected",
+			peerId: this.peerId,
+			peer: this.peer || null,
+                        peerConnenction: this
+                });
+        }
+
+        async  onTrack(evt){
+                this.meet.onTrack(evt, this.peerId);
+        }
+
+        async onDataChannel(evt) {
+                const channelName = evt.channel.label
+                console.log("Remote datachannel created:");
+		if (channelName === "MainDataChannel")
+                        this.mainChannel = evt.channel
+                else if (channelName === "AudioDataChannel")
+                        this.audioChannel = evt.channel
+                
+			evt.channel.onopen = function () {
+                        console.log("remote datachannel open, label: " + channelName);
+                        
+                }
+                evt.channel.onmessage = (evt) => {
+			console.log("datachannel recv:", evt);
+			this.emit(channelName, evt);
+		}
+        }
+
+	async onIceCandidate(event){
+		console.log('onIceCandidate!!', event)
+		if (event.candidate) {
+			if (this.peer.currentRemoteDescription) {
+				this.sendIceCandidate(this.peerId, event.candidate);
+			} else {
+				console.log('earlyCandidates:', event.candidate)
+				this.earlyCandidates.push(event.candidate);
+			}
+		}
+	}
+
+
+	sendIceCandidate (peerid, candidates){
+		if (Array.isArray(candidates) === false) // Always send an array
+			candidates = [candidates]
+
+		console.log('sendIceCandidate -> ', this.peerId, candidates)
+		signaling.send(peerid, 'addIceCandidate', {
+			peerid: peerid,
+			candidates: candidates
+		});
+	}
+
+	async onReceiveCall(dataJson){
+		try {
+			var descr = new RTCSessionDescription(dataJson);
+
+			await this.peer.setRemoteDescription(descr)
+
+			console.log("setRemoteDescription OK");
+			if(this.earlyCandidates.length > 0){
+				this.sendIceCandidate(this.peerId, this.earlyCandidates);
+				this.earlyCandidates.length = 0
+			}
+		} catch (error) {
+			console.error("setRemoteDescription error:" + JSON.stringify(error));
+		}
+	}
+
+	sendCommand(command, data = null){
+		if (this.peer) {
+			if (this.peer.iceConnectionState === 'connected') {
+				const message = {
+					command: command
+				}
+				if (data) message.data = data;
+				this.mainChannel.send(JSON.stringify(message));
+				console.log("Command sent")
+			} else {
+				throw new Error("Error: Tried to SendCommand but is not connected")
+			}
+		} else {
+			throw new Error("Error: Tried to SendCommand but is not connected")
+		}
+	}
+}
+
+
+//-------------------------------------------------------------------
 const offerOptions = {
         offerToReceiveAudio: 1,
         offerToReceiveVideo: 1
 };
 
-export class NearWebrtc extends LitElement {
-        startButton=null;
-        callButton=null;
-        hangupButton=null;
-        localVideo=null;
-        remoteVideo=null;
-        localStream=null;
-        pc1=null;
-        pc2=null;
-
+export class PeerConnectionMeet extends LitElement {
 
         static get styles() {
                 return css`
-                button {
-                        margin: 0 20px 0 0;
-                        width: 83px;
-                      }
-                      
-                      button#hangupButton {
-                          margin: 0;
-                      }
-                      
-                      video {
-                        --width: 45%;
-                        width: var(--width);
-                        height: calc(var(--width) * 0.75);
-                        margin: 0 0 20px 0;
-                        vertical-align: top;
-                      }
-                      
-                      video#localVideo {
-                        margin: 0 20px 20px 0;
-                      }
-                      
-                      div.box {
-                        margin: 1em;
-                      }
-                      
-                      @media screen and (max-width: 400px) {
-                        button {
-                          width: 83px;
-                          margin: 0 11px 10px 0;
-                        }
-                      
-                        video {
-                          height: 90px;
-                          margin: 0 0 10px 0;
-                          width: calc(50% - 7px);
-                        }
-                        video#localVideo {
-                          margin: 0 10px 20px 0;
-                        }
-                      
-                      }
+ 
                 `;
         }
 
-        
+        renderPeers(){
+                return html`
+			<div id="peers">
+				${this.peers.forEach(peer => html`
+					<video id="${peer.peerId}" playsinline autoplay></video>
+				`)}
+			</div>
+                `
+        }
 
         render(){
                 return html`
-                <video id="localVideo" playsinline autoplay muted></video>
-                <video id="remoteVideo" playsinline autoplay></video>
-            
+                <video id="mainVideo" playsinline autoplay muted></video>
+                ${this.renderPeers()}
                 <div class="box">
-                    <button @click="${this.start}" id="startButton">Start</button>
-                    <button @click="${this.call}" id="callButton">Call</button>
-                    <button @click="${this.hangup}" id="hangupButton">Hang Up</button>
+                    <button @click="${e=>this.select(0)}" >0</button>
+                    <button @click="${e=>this.select(1)}" >1</button>
+                    <button @click="${e=>this.select(2)}" >2</button>
+		    <button @click="${e=>this.select(3)}" >3</button>
+		    <button @click="${e=>this.select(4)}" >4</button>
                 </div>
                 `
 
         }
-        constructor() {  
-                super();      
+
+	select(source){
+		this.peers.forEach(peer => {
+			if(peer.mainChannel)
+				peer.mainChannel.send(JSON.stringify({
+					command: "select",
+					data: source
+				}))
+		})
+	}
+
+
+        constructor(){
+		super();
+                this.peers=new Map();
+		this.clientId=signaling.clientId;
+		//REMEMBER ICE SERVERS
         }
 
-        updated(){
-                this.startButton = this.shadowRoot.getElementById('startButton');
-                this.callButton = this.shadowRoot.getElementById('callButton');
-                this.hangupButton = this.shadowRoot.getElementById('hangupButton');
-                this.callButton.disabled = true;
-                this.hangupButton.disabled = true;
-                
-                this.localVideo = this.shadowRoot.getElementById('localVideo');
-                this.remoteVideo = this.shadowRoot.getElementById('remoteVideo');
+	async init(sessionId){
+		this.sessionId=sessionId;
+		signaling.on("peerConnected", this.onPeerConnected.bind(this));
+		signaling.on("peerDisconnected", this.onPeerDisconnected.bind(this));
+		signaling.on("call", this.onCall.bind(this));
+                this.stream= await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+		signaling.send("all","peerConnected",{"from": this.clientId , "sessionId": this.sessionId});
 
-                this.localVideo.addEventListener('loadedmetadata', function() {
-                        console.log(`Local video videoWidth: ${this.videoWidth}px,  videoHeight: ${this.videoHeight}px`);
-                });
+	}
 
-                this.remoteVideo.addEventListener('loadedmetadata', function() {
-                        console.log(`Remote video videoWidth: ${this.videoWidth}px,  videoHeight: ${this.videoHeight}px`);
-                });
+	onPeerConnected(data){
+		console.log('onPeerConnected', data)
+		if(data.from==this.clientId) return;
+		let peer=new PeerConnection(data.from,this,this.stream);
+		//peer.on("track", this.onTrack.bind(this));
+		this.peers.set(data.from,peer);
+		this.onPeerAdded(peer);
+		peer.connect(this.stream);
+	}
 
-                this.remoteVideo.addEventListener('resize', () => {
-                        console.log(`Remote video size changed to ${this.videoWidth}x${this.videoHeight}`);
-                });
+	onPeerDisconnected(data){
+		let peer=this.peers.get(data.from);
+		peer.disconnect();
+		if(this.shadowRoot.getElementById(data.from)){
+			this.shadowRoot.getElementById(data.from).remove();
+		}
+		this.peers.delete(data.from)
+		this.onPeerRemoved(peer);	
+	}
+        
+	onPeerAdded(peer){
+		this.requestUpdate();
+		if(peer.peer && peer.peer.getReceivers) {
+			let receiver = peer.peer.getReceivers().find((r)=>{
+				return r.track.kind == "video";});
+			if(receiver) this.setTrack(peer.peerId, receiver.track);
+		}	
+
+	}
+	onPeerRemoved(peer){
+		this.requestUpdate();
+	}
+
+	onCall(data){
+		console.log('call data: ', data)
+		if (data.from == this.clientId) return;
+		let peer=new PeerConnection(data.from,this,this.stream);
+		//peer.on("track", this.onTrack.bind(this));
+		this.onPeerAdded(peer);
+		this.peers.set(data.from,peer);
+		peer.onOffer(data);
+	}
+
+
+	setTrack(track, peerId){
+		console.log('addtrack', peerId);
+		let video;
+		let mediaStream=new MediaStream();
+		mediaStream.addTrack(track);
+		if (peerId.startsWith("nearuser")) 
+                	video = this.shadowRoot.getElementById(peerId);
+		else
+			video = this.shadowRoot.getElementById("mainVideo");	
+                video.srcObject = mediaStream;
         }
 
-        getName(pc) {
-                return (pc === this.pc1) ? 'pc1' : 'pc2';
+        onTrack(event, peerId){
+		console.log('ontrack', event, peerId);
+		this.setTrack(event.track, peerId);
         }
 
-        getOtherPc(pc) {
-                return (pc === this.pc1) ? this.pc2 : this.pc1;
-        }
+	sendCommand (command, data) {
+		this.peers.forEach(peer=>{
+			peer.sendCommand(command, data);
+		})
+	}
 
-        async  start() {
-                console.log('Requesting local stream');
-                this.startButton.disabled = true;
-                try {
-                        const stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
-                        console.log('Received local stream');
-                        this.localVideo.srcObject = stream;
-                        this.localStream = stream;
-                        this.callButton.disabled = false;
-                } catch (e) {
-                        alert(`getUserMedia() error: ${e.name}`);
-                }
-        }
+	
+	disconnect(){
+		this.peers.forEach(peer=>{
+			peer.sendCommand(command, data);
+		})
+		signaling.disconnect()
+	}
 
-        getSelectedSdpSemantics() {                
-                return {};
-        }
-
-        call() {
-                this.callButton.disabled = true;
-                this.hangupButton.disabled = false;
-                console.log('Starting call');
-                const videoTracks = this.localStream.getVideoTracks();
-                const audioTracks = this.localStream.getAudioTracks();
-                if (videoTracks.length > 0) {
-                        console.log(`Using video device: ${videoTracks[0].label}`);
-                }
-                if (audioTracks.length > 0) {
-                        console.log(`Using audio device: ${audioTracks[0].label}`);
-                }
-                const configuration = this.getSelectedSdpSemantics();
-                console.log('RTCPeerConnection configuration:', configuration);
-                this.pc1 = new RTCPeerConnection(configuration);
-                console.log('Created local peer connection object pc1');
-                this.pc1.addEventListener('icecandidate', (e => this.onIceCandidate(this.pc1, e)).bind(this));
-                this.pc2 = new RTCPeerConnection(configuration);
-                console.log('Created remote peer connection object pc2');
-                this.pc2.addEventListener('icecandidate', (e => this.onIceCandidate(this.pc2, e)).bind(this));
-                this.pc1.addEventListener('iceconnectionstatechange', (e => this.onIceStateChange(this.pc1, e)).bind(this));
-                this.pc2.addEventListener('iceconnectionstatechange', (e => this.onIceStateChange(this.pc2, e)).bind(this));
-                this.pc2.addEventListener('track', this.gotRemoteStream.bind(this));
-
-                this.localStream.getTracks().forEach(track => this.pc1.addTrack(track, this.localStream));
-                console.log('Added local stream to pc1');
-
-              
-                console.log('pc1 createOffer start');
-                this.pc1.createOffer(offerOptions)
-                .then(offer => this.onCreateOfferSuccess(offer))
-                .catch(e => this.onCreateSessionDescriptionError(e));
-                
-        }
-
-        onCreateSessionDescriptionError(error) {
-                console.log(`Failed to create session description: ${error.toString()}`);
-        }
-
-        async  onCreateOfferSuccess(desc) {
-                //console.log(`Offer from pc1\n${desc.sdp}`);
-                console.log('pc1 setLocalDescription start');
-                try {
-                        await this.pc1.setLocalDescription(desc);
-                        this.onSetLocalSuccess(this.pc1);
-                } catch (e) {
-                        this.onSetSessionDescriptionError(e);
-                }
-
-                console.log('pc2 setRemoteDescription start');
-                try {
-                        await this.pc2.setRemoteDescription(desc);
-                        this.onSetRemoteSuccess(this.pc2);
-                } catch (e) {
-                        this.onSetSessionDescriptionError(e);
-                }
-
-                console.log('pc2 createAnswer start');
-                // Since the 'remote' side has no media stream we need
-                // to pass in the right constraints in order for it to
-                // accept the incoming offer of audio and video.
-                try {
-                        const answer = await this.pc2.createAnswer();
-                        await this.onCreateAnswerSuccess(answer);
-                } catch (e) {
-                        this.onCreateSessionDescriptionError(e);
-                }
-        }
-
-        onSetLocalSuccess(pc) {
-                console.log(`${this.getName(pc)} setLocalDescription complete`);
-        }
-
-        onSetRemoteSuccess(pc) {
-                console.log(`${this.getName(pc)} setRemoteDescription complete`);
-        }
-
-        onSetSessionDescriptionError(error) {
-                console.log(`Failed to set session description: ${error.toString()}`);
-        }
-
-        gotRemoteStream(e) {
-                if (this.remoteVideo.srcObject !== e.streams[0]) {
-                        this.remoteVideo.srcObject = e.streams[0];
-                        console.log('pc2 received remote stream');
-                }
-        }
-
-        async  onCreateAnswerSuccess(desc) {
-                //console.log(`Answer from pc2:\n${desc.sdp}`);á
-                console.log('pc2 setLocalDescription start');
-                try {
-                        await this.pc2.setLocalDescription(desc);
-                        this.onSetLocalSuccess(this.pc2);
-                } catch (e) {
-                        this.onSetSessionDescriptionError(e);
-                }
-                console.log('pc1 setRemoteDescription start');
-                try {
-                        await this.pc1.setRemoteDescription(desc);
-                        this.onSetRemoteSuccess(this.pc1);
-                } catch (e) {
-                        this.onSetSessionDescriptionError(e);
-                }
-        }
-
-        async  onIceCandidate(pc, event) {
-                console.log("ON ICE CANDIDATE", pc, event)
-                try {
-                        await (this.getOtherPc(pc).addIceCandidate(event.candidate));
-                        this.onAddIceCandidateSuccess(pc);
-                } catch (e) {
-                        this.onAddIceCandidateError(pc, e);
-                }
-                console.log(`${this.getName(pc)} ICE candidate:\n${event.candidate ? event.candidate.candidate : '(null)'}`);
-        }
-
-        onAddIceCandidateSuccess(pc) {
-                console.log(`${this.getName(pc)} addIceCandidate success`);
-        }
-
-        onAddIceCandidateError(pc, error) {
-                console.log(`${this.getName(pc)} failed to add ICE Candidate: ${error.toString()}`);
-        }
-
-        onIceStateChange(pc, event) {
-                if (pc) {
-                        console.log(`${this.getName(pc)} ICE state: ${pc.iceConnectionState}`);
-                        console.log('ICE state change event: ', event);
-                }
-        }
-
-        hangup() {
-                console.log('Ending call');
-                this.pc1.close();
-                this.pc2.close();
-                this.pc1 = null;
-                this.pc2 = null;
-                this.hangupButton.disabled = true;
-                this.callButton.disabled = false;
-        }
-
+	emit(event, data){
+		this.dispatchEvent(new CustomEvent(event, {detail: data}));
+	}
 }
 
-window.customElements.define('near-webrtc', NearWebrtc);
+
+
+
+
+
+
+
+window.customElements.define('near-meet', PeerConnectionMeet);

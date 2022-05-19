@@ -57,9 +57,9 @@ export class NearMqtt extends LitElement {
         subscribe(topic, f){
                 this.client.subscribe(topic, function (err) {
                         if (!err) {
-                          //this.client.publish('presence', 'Hello mqtt')
-                        }
-                        else console.log("suscribe error");
+				console.log("suscribed OK to ",topic);
+                	}
+                        else console.log("suscribe error to ",topic,err);
                       })
         }
 
@@ -105,6 +105,7 @@ export class NearMqtt extends LitElement {
                         reconnectPeriod: 10000,
                         clientId: 'nearuser_' + Math.random().toString(16).substr(2, 8)
                 };
+                this.clientId=options.clientId;
                 console.log("connecting to",this.endpoint,options);               
                 if(this.endpoint) {
                         return new Promise((resolve,reject)=>{
