@@ -76,6 +76,11 @@ export class NearMqtt extends LitElement {
                         this.dispatchEvent(new CustomEvent('connect'));
                              
                 }.bind(this))
+                this.client.on('reconnect', function () {
+                        console.log('reconnect');
+                        this.connected=false;
+                        this.dispatchEvent(new CustomEvent('disconnect'));        
+                }.bind(this))
                 this.client.on('disconnect', function () {
                           console.log('disconnect');
                           this.connected=false;
@@ -120,7 +125,7 @@ export class NearMqtt extends LitElement {
                                 this.client=window.mqtt.connect(data.url,options);
                                 console.log(this);
                                 this.setupEvents();
-                                resolve();
+                                resolve(this);
                           })
                 })                
         }

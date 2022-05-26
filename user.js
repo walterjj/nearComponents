@@ -139,14 +139,15 @@ export class NearUser extends LitElement {
       }
       #name_button {
         padding:0; 
-        height:2em; width:2em;     
+        height: 56px; width:56px;     
         font-size:20px;
         border:none;
         background-color:#ffffff80;
+        overflow:hidden;
         clip-path: circle(50% at center);}
       #name_button img {
           max-width:56px;     
-          clip-path: circle(45% at center);
+          clip-path: circle(46% at center);
         }  
       `;
     }

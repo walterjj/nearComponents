@@ -62,14 +62,56 @@ export class Signaling extends NearMqtt {
 
 	setupEvents(){
 		super.setupEvents();
-		this.client.on('connect', function () {
+		this.client.on('connect', function (connack) {
                         console.log('connect ', this.sessionId, '/',this.clientId);
                         this.connected=true;
-			this.subscribe(`sessions/${this.sessionId}/${this.clientId}`);
-			this.subscribe(`sessions/${this.sessionId}/all`);
-			this.subscribe(`sessions/${this.sessionId}/backend`);
+			if(!connack.sessionPresent){
+				this.subscribe(`sessions/${this.sessionId}/${this.clientId}`);
+				this.subscribe(`sessions/${this.sessionId}/all`);
+				this.subscribe(`sessions/${this.sessionId}/backend`);
+			}
+			this.listeners.forEach(listener => {
+				if (listener.command=="connect")
+					listener.callback(connack);
+				
+			});
+			this.dispatchEvent(new CustomEvent('connect'));
 			
                 }.bind(this));
+		this.client.on('reconnect', function () {
+                        console.log('reconnect');
+                        //this.connected=false;
+                        this.dispatchEvent(new CustomEvent('reconnect'));        
+                }.bind(this))
+                this.client.on('disconnect', function () {
+                          console.log('disconnect');
+                          this.connected=false;
+			  this.listeners.forEach(listener => {
+				if (listener.command=="disconnect")
+					listener.callback({});
+				
+			  });
+                          this.dispatchEvent(new CustomEvent('disconnect'));        
+                }.bind(this))
+                this.client.on('close', function () {
+                          console.log('close');
+                          this.connected=false;
+			  this.listeners.forEach(listener => {
+				if (listener.command=="close")
+					listener.callback({});
+				
+			  });
+                          this.dispatchEvent(new CustomEvent('close'));        
+                }.bind(this))
+                this.client.on('offline', function () {
+                          console.log('offline');
+                          //this.connected=false;
+                          this.dispatchEvent(new CustomEvent('offline'));        
+                }.bind(this))
+                this.client.on('error', function (error) {
+                          console.log('error',error);     
+                }.bind(this))
+
 	}
 
 	onMessage(topic,msg,packet){
@@ -92,20 +134,22 @@ export class Signaling extends NearMqtt {
                 super.onMessage(topic,msg,packet);
         }
 
-	connect(sessionID, options){
+	/*connect(sessionID, options){
 		this.sessionId = sessionID	
 		console.log('Connecting to MQTT');
                 // validar clientId.
 		return super.connect(options);
-	}
+	}*/
 
-	connect(sessionId, options){
+	connect(sessionId, options=null){
 		this.sessionId = sessionId
 		if(!options) options={
                         reconnectPeriod: 10000,
+			keepAlive: 15,
                         clientId : 'nearuser_' + Math.random().toString(16).substr(2, 8)
                 };
 		options.reconnectPeriod= options.reconnectPeriod || 10000;
+		options.keepAlive= options.keepAlive || 15;
                 this.clientId=options.clientId;	
 		options.will={
 			topic:`sessions/${sessionId}/all`,
@@ -116,7 +160,7 @@ export class Signaling extends NearMqtt {
 			qos:1,
 			retain:false
 		}
-		console.log('Connecting to MQTT');
+		console.log('Connecting to MQTT Signaling');
 		return super.connect(options);
 	}
 
@@ -172,7 +216,7 @@ let iceServers=[
 
 class PeerConnection{ 
         
-        constructor(peerId, meet, stream=null, mediaConstraints=null) {
+        constructor(peerId, meet, stream=null, mediaConstraints={ offerToReceiveAudio: true, offerToReceiveVideo: true }) {
 		//super();
                 this.peer = null;
                 this.meet = meet;
@@ -181,8 +225,8 @@ class PeerConnection{
 			sdpSemantics: 'unified-plan',
                         iceServers: iceServers || []
                 };
-                this.pcOptions = mediaConstraints || { "optional": [{ "DtlsSrtpKeyAgreement": true }] };
-                this.mediaConstraints = { offerToReceiveAudio: true, offerToReceiveVideo: true };
+                this.pcOptions =  { "optional": [{ "DtlsSrtpKeyAgreement": true }] };
+                this.mediaConstraints = mediaConstraints ;
                 this.earlyCandidates = [];
                 this.mainChannel = null
                 this.audioChannel = null
@@ -216,7 +260,8 @@ class PeerConnection{
 		this.peerConfig.iceServers = this.peerConfig.iceServers.concat(iceServers);
 	}
 
-	async connect(){
+	async connect(stream=null){
+		if (stream) this.stream=stream;
 		this.createOffer();
 	}
 
@@ -238,12 +283,17 @@ class PeerConnection{
 		}
 	}
 
-	async disconnect(){
+	close(){
 		if (this.peer) {
 			this.peer.close();
 			signaling.removeListeners("addIceCandidate", this.peerId);
-			signaling.removeListeners("answer", this.peerId);  
-			this.peer = null;
+			signaling.removeListeners("answer", this.peerId); 
+		}	 
+	}
+
+	async disconnect(){
+		if (this.peer) {
+			this.close();
 			try {
 				await signaling.send("all", "peerDisconnected", {
 					peerid: this.peerId
@@ -275,10 +325,13 @@ class PeerConnection{
 		console.log('onOffer:', offer)
 		
 		if (this.stream) {
-			this.peer.addStream(this.stream);
+			//this.peer.addStream(stream);
+			for ( let track of this.stream.getTracks()){
+				this.peer.addTrack(track);
+			};
 		}
 		await this.onReceiveCall(offer)
-		const answer = await this.peer.createAnswer()
+		const answer = await this.peer.createAnswer(this.mediaConstraints)
 		try {
 			await this.peer.setLocalDescription(answer)
 		} catch (error) {
@@ -291,12 +344,14 @@ class PeerConnection{
 		signaling.send(this.peerId, 'answer', data)
 	}
 
-	async createOffer(stream){
-		try {
-			
+	async createOffer(){
+		try {		
 			let peerid = this.peerId
-			if (stream) {
-				this.peer.addStream(stream);
+			if (this.stream) {
+				//this.peer.addStream(stream);
+				for ( let track of this.stream.getTracks()){
+					this.peer.addTrack(track);
+				};
 			}
 			this.mainChannel=this.createDataChannel("MainDataChannel");
 			// create Offer
@@ -314,7 +369,7 @@ class PeerConnection{
 			
 			
 		} catch (e) {
-			this.disconnect();
+			this.close();
 			console.error("connect error: " + e);
 		}
 	}
@@ -361,11 +416,12 @@ class PeerConnection{
 	}
 
         async onIceConnectionStateChange(evt){
-                this.emit(evt.type,{
+		//this.meet.onIceConnectionStateChange(evt, this.peerId);
+                this.meet.onIceConnectionStateChange(evt.type,{
                         connectionState: (this.peer && this.peer.iceConnectionState) || "disconnected",
 			peerId: this.peerId,
 			peer: this.peer || null,
-                        peerConnenction: this
+                        peerConnection: this
                 });
         }
 
@@ -460,16 +516,47 @@ export class PeerConnectionMeet extends LitElement {
 
         static get styles() {
                 return css`
- 
+		#mainVideo {
+			position:relative;	
+			height: fit-content;
+			min-height: 100%;
+			object-fit: cover;
+			width: fit-content;
+			min-width: 100%;
+		}
+		#mainVideo.contain {
+			object-fit: contain;
+		}
+		#peers{ position:fixed; top:60px; right:0; width:100px; bottom:auto;
+			display:flex; flex-direction:column;	
+		}
+		#peers > video{
+			margin:5px;
+			box-shadow: 0px 0px 5px #000;
+		}
+		#controls {
+			position:fixed; bottom:0; left:0; width:100%;
+		}
+		#controls button {
+			padding:10px;
+			margin:10px;
+		}
+		#status { color:#0f0;}
+		@media screen and (max-width: 600px) {
+			#peers{flex-direction:row; left:auto; width:auto;right:0; height:80px}
+		}
                 `;
+        }
+
+	static get properties() {
+                return {
+                session: { type: String }       
+                };
         }
 
         renderPeers(){
                 return html`
 			<div id="peers">
-				${this.peers.forEach(peer => html`
-					<video id="${peer.peerId}" playsinline autoplay></video>
-				`)}
 			</div>
                 `
         }
@@ -477,8 +564,9 @@ export class PeerConnectionMeet extends LitElement {
         render(){
                 return html`
                 <video id="mainVideo" playsinline autoplay muted></video>
+		<div id="status"></div>
                 ${this.renderPeers()}
-                <div class="box">
+                <div id="controls" class="box">
                     <button @click="${e=>this.select(0)}" >0</button>
                     <button @click="${e=>this.select(1)}" >1</button>
                     <button @click="${e=>this.select(2)}" >2</button>
@@ -507,8 +595,21 @@ export class PeerConnectionMeet extends LitElement {
 		//REMEMBER ICE SERVERS
         }
 
+
+	attributeChangedCallback(attrName, oldVal, newVal){
+		console.log("onAttributeChanged", attrName, oldVal, newVal)
+		if(attrName=="session"){
+			this.init(newVal);
+		}
+		super.attributeChangedCallback(attrName, oldVal, newVal);
+	}
+
 	async init(sessionId){
 		this.sessionId=sessionId;
+		signaling.resetListeners();
+		signaling.on("connect", this.onConnect.bind(this));
+		signaling.on("disconnect", this.onDisconnect.bind(this));
+		signaling.on("close", this.onDisconnect.bind(this));
 		signaling.on("peerConnected", this.onPeerConnected.bind(this));
 		signaling.on("peerDisconnected", this.onPeerDisconnected.bind(this));
 		signaling.on("call", this.onCall.bind(this));
@@ -517,37 +618,65 @@ export class PeerConnectionMeet extends LitElement {
 
 	}
 
+	onConnect(connack){
+		//signaling.send("all","peerConnected",{"from": this.clientId , "sessionId": this.sessionId});
+	}
+
+	onDisconnect(){
+		for(let {peerId,peer} of this.peers.entries()){
+			peer.close();
+			if(peerId.startsWith("nearuser")){
+				let video=this.shadowRoot.getElementById(peerId);
+				if(video) video.remove();
+			}
+		}
+		this.peers.clear();
+	}
+
 	onPeerConnected(data){
 		console.log('onPeerConnected', data)
 		if(data.from==this.clientId) return;
+		if(this.peers.has(data.from)) return;
 		let peer=new PeerConnection(data.from,this,this.stream);
 		//peer.on("track", this.onTrack.bind(this));
 		this.peers.set(data.from,peer);
 		this.onPeerAdded(peer);
-		peer.connect(this.stream);
+		peer.connect();
 	}
 
 	onPeerDisconnected(data){
 		let peer=this.peers.get(data.from);
-		peer.disconnect();
-		if(this.shadowRoot.getElementById(data.from)){
-			this.shadowRoot.getElementById(data.from).remove();
+		if(peer){
+			peer.close();
+			if(data.from.startsWith("nearuser")){
+				let video=this.shadowRoot.getElementById(data.from);
+				if(video) video.remove();
+			}	
+			this.peers.delete(data.from)
+			this.onPeerRemoved(peer);		
 		}
-		this.peers.delete(data.from)
-		this.onPeerRemoved(peer);	
+		
 	}
         
 	onPeerAdded(peer){
-		this.requestUpdate();
-		if(peer.peer && peer.peer.getReceivers) {
-			let receiver = peer.peer.getReceivers().find((r)=>{
-				return r.track.kind == "video";});
-			if(receiver) this.setTrack(peer.peerId, receiver.track);
+		//this.requestUpdate();
+		
+		if(peer.peerId.startsWith("nearuser")){
+			let video=document.createElement("video");
+			video.id=peer.peerId;
+			video.playsinline=true;
+			video.autoplay=true;
+			this.shadowRoot.getElementById("peers").appendChild(video);
+		}
+		if(peer.peer) {
+			for(let receiver of peer.peer.getReceivers()){
+				this.setTrack( receiver.track, peer.peerId);
+			}
 		}	
 
 	}
 	onPeerRemoved(peer){
-		this.requestUpdate();
+		console.log("onPeerRemoved", peer);		
 	}
 
 	onCall(data){
@@ -564,18 +693,30 @@ export class PeerConnectionMeet extends LitElement {
 	setTrack(track, peerId){
 		console.log('addtrack', peerId);
 		let video;
-		let mediaStream=new MediaStream();
-		mediaStream.addTrack(track);
 		if (peerId.startsWith("nearuser")) 
                 	video = this.shadowRoot.getElementById(peerId);
 		else
 			video = this.shadowRoot.getElementById("mainVideo");	
+		let mediaStream=video.srcObject || new MediaStream();
+		console.log("mediaStream", mediaStream,video);
+		mediaStream.addTrack(track);
                 video.srcObject = mediaStream;
         }
 
         onTrack(event, peerId){
 		console.log('ontrack', event, peerId);
 		this.setTrack(event.track, peerId);
+        }
+
+	onIceConnectionStateChange(event, data){
+		console.log(event, data);
+		if(data.connectionState=="complete"){
+			for(let receiver of data.peer.getReceivers()){
+				this.setTrack(receiver.track,data.peerId);
+			}
+		}
+		
+		//this.setTrack(event.track, peerId);
         }
 
 	sendCommand (command, data) {
@@ -586,13 +727,18 @@ export class PeerConnectionMeet extends LitElement {
 
 	
 	disconnect(){
+		signaling.send("all","peerDisconnected",{"from": this.clientId , "sessionId": this.sessionId});
 		this.peers.forEach(peer=>{
-			peer.sendCommand(command, data);
+			if(peer)
+				peer.close();
 		})
-		signaling.disconnect()
+		//signaling.disconnect()
 	}
 
 	emit(event, data){
+		console.log("emit", event, data);
+		if(event=="iceconnectionstatechange")
+			this.shadowRoot.getElementById("status").innerHTML=event+' '+data.connectionState; //+ " " + JSON.stringify(data);
 		this.dispatchEvent(new CustomEvent(event, {detail: data}));
 	}
 }
