@@ -396,18 +396,8 @@ class PeerConnection{
 	createDataChannel(label){
 		try {
 			let dataChannel = this.peer.createDataChannel(label);
-			dataChannel.onopen = () => {
-				console.log(label + " open");
-				dataChannel.send(label + "openned");
-				this.emit("event" , {
-					"type": label,
-					"status": "ChannelOpenned"
-				});
-			}
-			dataChannel.onmessage = (evt) => {
-				console.log("datachannel recv:", evt);
-				this.emit(label, evt);
-			}
+			evt.channel.onopen = (evt => this.emit("datachannelopened", evt,this)).bind(this);
+                	evt.channel.onmessage = (evt => this.emit(label, evt, this)).bind(this);	
 			return dataChannel;
 		} catch (e) {
 			console.error("Cannot create datachannel error: " + e);
@@ -441,10 +431,8 @@ class PeerConnection{
                         console.log("remote datachannel open, label: " + channelName);
                         
                 }
-                evt.channel.onmessage = (evt) => {
-			console.log("datachannel recv:", evt);
-			this.emit(channelName, evt);
-		}
+		evt.channel.onopen = (evt => this.emit("datachannelopened", evt,this)).bind(this);
+                evt.channel.onmessage = (evt => this.emit(channelName, evt, this)).bind(this);						
         }
 
 	async onIceCandidate(event){
@@ -536,10 +524,12 @@ export class PeerConnectionMeet extends LitElement {
 		}
 		#controls {
 			position:fixed; bottom:0; left:0; width:100%;
+			opacity:0.7;
 		}
 		#controls button {
 			padding:10px;
 			margin:10px;
+			border-radius:10px;
 		}
 		#status { color:#0f0;}
 		@media screen and (max-width: 600px) {
@@ -567,11 +557,6 @@ export class PeerConnectionMeet extends LitElement {
 		<div id="status"></div>
                 ${this.renderPeers()}
                 <div id="controls" class="box">
-                    <button @click="${e=>this.select(0)}" >0</button>
-                    <button @click="${e=>this.select(1)}" >1</button>
-                    <button @click="${e=>this.select(2)}" >2</button>
-		    <button @click="${e=>this.select(3)}" >3</button>
-		    <button @click="${e=>this.select(4)}" >4</button>
                 </div>
                 `
 
@@ -735,9 +720,33 @@ export class PeerConnectionMeet extends LitElement {
 		//signaling.disconnect()
 	}
 
+	onMainDataChannel(description){
+		let controls=this.shadowRoot.getElementById("controls");
+		controls.innerHTML="";
+		for(let scene of description.scenes){
+			let button=document.createElement("button");
+			button.innerText=scene.title || scene.name || scene.index;
+			button.onclick=()=>{
+				this.select(scene.index);
+			}
+			controls.appendChild(button);
+		}
+		this.requestUpdate();
+	}
+
 	emit(event, data){
-		console.log("emit", event, data);
-		if(event=="iceconnectionstatechange")
+		console.log("meet.emit", event, data);
+		if(event=="MainDataChannel"){
+			try{	
+				let description=JSON.parse(data.data);
+				this.onMainDataChannel(description);
+			}
+			catch(e){
+				console.log("MainDataChannel", e);	
+			}
+			return;
+		}
+		else if(event=="iceconnectionstatechange")
 			this.shadowRoot.getElementById("status").innerHTML=event+' '+data.connectionState; //+ " " + JSON.stringify(data);
 		this.dispatchEvent(new CustomEvent(event, {detail: data}));
 	}
