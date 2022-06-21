@@ -238,7 +238,7 @@ class PeerConnection{
         }
 
         emit(name, object) {
-                this.meet.emit(name, object);
+                this.meet.emit(name,object,this);
         }
 
 	setPeerId(id) {
@@ -317,20 +317,20 @@ class PeerConnection{
 
 	async onAnswer(answer){
 		console.log('onAnswer:', answer)
-		await this.onReceiveCall(answer);
+		await this.setRemoteDescription(answer);
 		
 	}
 
 	async onOffer(offer){
 		console.log('onOffer:', offer)
-		
+		await this.setRemoteDescription(offer)
 		if (this.stream) {
 			//this.peer.addStream(stream);
 			for ( let track of this.stream.getTracks()){
-				this.peer.addTrack(track);
+				this.peer.addTrack(track,this.stream);
 			};
 		}
-		await this.onReceiveCall(offer)
+		
 		const answer = await this.peer.createAnswer(this.mediaConstraints)
 		try {
 			await this.peer.setLocalDescription(answer)
@@ -350,10 +350,11 @@ class PeerConnection{
 			if (this.stream) {
 				//this.peer.addStream(stream);
 				for ( let track of this.stream.getTracks()){
-					this.peer.addTrack(track);
+					this.peer.addTrack(track,this.stream);
 				};
 			}
-			this.mainChannel=this.createDataChannel("MainDataChannel");
+			//this.mainChannel=this.createDataChannel("MainDataChannel");
+			//this.proxyDataChannel=this.createDataChannel("ProxyDataChannel");
 			// create Offer
 			const offer = await this.peer.createOffer(this.mediaConstraints)
 			console.log("Create Offer, send to ", offer, this.peerId)
@@ -396,8 +397,8 @@ class PeerConnection{
 	createDataChannel(label){
 		try {
 			let dataChannel = this.peer.createDataChannel(label);
-			evt.channel.onopen = (evt => this.emit("datachannelopened", evt,this)).bind(this);
-                	evt.channel.onmessage = (evt => this.emit(label, evt, this)).bind(this);	
+			dataChannel.onopen = (evt => this.emit(label, evt,this)).bind(this);
+                	dataChannel.onmessage = (evt => this.emit(label, evt, this)).bind(this);	
 			return dataChannel;
 		} catch (e) {
 			console.error("Cannot create datachannel error: " + e);
@@ -422,6 +423,7 @@ class PeerConnection{
         async onDataChannel(evt) {
                 const channelName = evt.channel.label
                 console.log("Remote datachannel created:");
+		this[channelName[0].toLowerCase()+channelName.slice(1)] = evt.channel;
 		if (channelName === "MainDataChannel")
                         this.mainChannel = evt.channel
                 else if (channelName === "AudioDataChannel")
@@ -431,7 +433,7 @@ class PeerConnection{
                         console.log("remote datachannel open, label: " + channelName);
                         
                 }
-		evt.channel.onopen = (evt => this.emit("datachannelopened", evt,this)).bind(this);
+		evt.channel.onopen = (evt => this.emit(channelName, evt,this)).bind(this);
                 evt.channel.onmessage = (evt => this.emit(channelName, evt, this)).bind(this);						
         }
 
@@ -459,7 +461,7 @@ class PeerConnection{
 		});
 	}
 
-	async onReceiveCall(dataJson){
+	async setRemoteDescription(dataJson){
 		try {
 			var descr = new RTCSessionDescription(dataJson);
 
@@ -504,6 +506,9 @@ export class PeerConnectionMeet extends LitElement {
 
         static get styles() {
                 return css`
+		:host {
+			
+		}
 		#mainVideo {
 			position:relative;	
 			height: fit-content;
@@ -511,6 +516,13 @@ export class PeerConnectionMeet extends LitElement {
 			object-fit: cover;
 			width: fit-content;
 			min-width: 100%;
+		}
+		#overlay{
+			position:absolute;
+			top:0;
+			left:0;
+			width:100%;
+			height:100%;
 		}
 		#mainVideo.contain {
 			object-fit: contain;
@@ -554,6 +566,7 @@ export class PeerConnectionMeet extends LitElement {
         render(){
                 return html`
                 <video id="mainVideo" playsinline autoplay muted></video>
+		<div id="overlay"></div>
 		<div id="status"></div>
                 ${this.renderPeers()}
                 <div id="controls" class="box">
@@ -608,7 +621,7 @@ export class PeerConnectionMeet extends LitElement {
 	}
 
 	onDisconnect(){
-		for(let {peerId,peer} of this.peers.entries()){
+		for(const [peerId, peer] of this.peers){
 			peer.close();
 			if(peerId.startsWith("nearuser")){
 				let video=this.shadowRoot.getElementById(peerId);
@@ -720,9 +733,12 @@ export class PeerConnectionMeet extends LitElement {
 		//signaling.disconnect()
 	}
 
-	onMainDataChannel(description){
+	onMainDataChannel(description,peerConnection){
 		let controls=this.shadowRoot.getElementById("controls");
+		let overlay=this.shadowRoot.getElementById("overlay");
+		console.log("onMainDataChannel", description);
 		controls.innerHTML="";
+		overlay.innerHTML="";
 		for(let scene of description.scenes){
 			let button=document.createElement("button");
 			button.innerText=scene.title || scene.name || scene.index;
@@ -730,25 +746,53 @@ export class PeerConnectionMeet extends LitElement {
 				this.select(scene.index);
 			}
 			controls.appendChild(button);
+			
+		}
+		if(description.current) {
+			let scene=description.current;
+			if(scene.form){
+				console.log("current:", scene);
+				overlay.innerHTML=scene.form;
+				for (let child of overlay.children) {
+					if(child.tagName.toLowerCase()=="near-vnc"){
+						child.connect(peerConnection.proxyDataChannel,null,"trotadora");
+					}
+				}
+
+			}
+
 		}
 		this.requestUpdate();
 	}
 
-	emit(event, data){
-		console.log("meet.emit", event, data);
-		if(event=="MainDataChannel"){
+	emit(eventName, evt, peerConnection){
+		console.log("meet.emit", eventName, evt);
+		if(eventName=="MainDataChannel" && evt.type!="open"){
 			try{	
-				let description=JSON.parse(data.data);
-				this.onMainDataChannel(description);
+				let description=JSON.parse(evt.data);
+				this.onMainDataChannel(description,peerConnection);
 			}
 			catch(e){
 				console.log("MainDataChannel", e);	
 			}
 			return;
 		}
-		else if(event=="iceconnectionstatechange")
-			this.shadowRoot.getElementById("status").innerHTML=event+' '+data.connectionState; //+ " " + JSON.stringify(data);
-		this.dispatchEvent(new CustomEvent(event, {detail: data}));
+		else if(eventName=="ProxyDataChannel"){
+			if(evt.type=="open"){
+				try{	
+					console.log("ProxyDataChannel", evt);
+					//peerConnection.proxyDataChannel=evt.target;
+				}
+				catch(e){
+					console.log("ProxyDataChannel", e);	
+				}
+			}
+			else console.log("ProxyDataChannel data", evt);	
+			return;
+		}
+		else if(eventName=="iceconnectionstatechange")
+			this.shadowRoot.getElementById("status").innerHTML=eventName+' '+evt.connectionState; //+ " " + JSON.stringify(data);
+		this.dispatchEvent(new CustomEvent(eventName, {detail: evt}));
 	}
 }
 
