@@ -755,7 +755,7 @@ export class PeerConnectionMeet extends LitElement {
 				overlay.innerHTML=scene.form;
 				for (let child of overlay.children) {
 					if(child.tagName.toLowerCase()=="near-vnc"){
-						child.connect(peerConnection.proxyDataChannel,null,"trotadora");
+						child.connect(peerConnection.proxyDataChannel,null,"12345678");
 					}
 				}
 

@@ -17,13 +17,7 @@ function connectedToServer(e) {
         }
     }
 
-    // When this function is called, the server requires
-    // credentials to authenticate
-    function credentialsAreRequired(e) {
-        console.log("Credentials are required",e);
-        //const password = prompt("Password Required:");
-        //((rfb.sendCredentials({ password: password });
-    }
+ 
 
     // When this function is called we have received
     // a desktop name from the server
@@ -40,6 +34,8 @@ export class NearVNC extends LitElement {
         display: block;
         width: 100%;
         height: 100%;
+        max-width:100vw;
+        max-height:100vh; 
         background-color: #ccc;
       }
     `;
@@ -50,16 +46,34 @@ export class NearVNC extends LitElement {
         this.connected = false;
   }
 
+   // When this function is called, the server requires
+    // credentials to authenticate
+  credentialsAreRequired(e) {
+      console.log("Credentials are required",e);
+      const password = prompt("Password Required:");
+      this.rfb.sendCredentials({ password: password });
+  }
+
   connect( channel , user=null , password=null ) {
         console.log("init",channel,user,password);
         this.channel=channel;
-        let options={ credentials:{}, shared:true};
+        let options={ 
+          credentials:{}, 
+          shared:true,
+          scaleViewport:true,
+          resizeSession:true,
+          background:"transparent"
+
+        };
         if(user) options.credentials.user=user;
+        else if(this.getAttribute("user")) options.credentials.user=this.getAttribute("user");
         if(password) options.credentials.password=password;
+        else if(this.getAttribute("password")) options.credentials.password=this.getAttribute("password");
+        
         this.rfb = new RFB(this, channel, options);
         this.rfb.addEventListener("connect",  connectedToServer);
         this.rfb.addEventListener("disconnect", disconnectedFromServer);
-        this.rfb.addEventListener("credentialsrequired", credentialsAreRequired);
+        this.rfb.addEventListener("credentialsrequired", this.credentialsAreRequired.bind(this));
         this.rfb.addEventListener("desktopname", updateDesktopName);
         this.rfb.addEventListener("serververification", e=>console.log("serververification",e));
         this.rfb.addEventListener("securityfailed", e=>console.log("securityfailed",e));
