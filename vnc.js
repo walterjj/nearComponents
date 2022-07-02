@@ -60,8 +60,6 @@ export class NearVNC extends LitElement {
         let options={ 
           credentials:{}, 
           shared:true,
-          scaleViewport:true,
-          resizeSession:true,
           background:"transparent"
 
         };
@@ -71,6 +69,10 @@ export class NearVNC extends LitElement {
         else if(this.getAttribute("password")) options.credentials.password=this.getAttribute("password");
         
         this.rfb = new RFB(this, channel, options);
+        if(this.getAttribute("scale")) this.rfb.scaleViewport=true;
+        if(this.getAttribute("resize")) this.rfb.resizeSession=true;
+        if(this.getAttribute("background")) this.rfb.background=this.getAttribute("background");
+
         this.rfb.addEventListener("connect",  connectedToServer);
         this.rfb.addEventListener("disconnect", disconnectedFromServer);
         this.rfb.addEventListener("credentialsrequired", this.credentialsAreRequired.bind(this));

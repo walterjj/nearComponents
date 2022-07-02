@@ -64,8 +64,8 @@ export class NearMqtt extends LitElement {
         }
 
 
-        publish(topic, msg){
-                this.client.publish(topic, msg);
+        publish(topic, msg, options=null, callback=null){
+                this.client.publish(topic, msg,options,callback);
         }
 
         setupEvents(){
@@ -130,8 +130,8 @@ export class NearMqtt extends LitElement {
                 })                
         }
 
-        end(){
-                this.client.end();
+        end(force=null,options=null,callback=null){
+                this.client.end(force,options,callback);
         }
 }
 

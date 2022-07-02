@@ -31,7 +31,7 @@ export class Signaling extends NearMqtt {
 			Object.assign(message, data);
 
 			console.log("send:", command, message)			
-			this.publish(`sessions/${this.sessionId}/${to}`,JSON.stringify(message));
+			this.publish(`sessions/${this.sessionId}/${to}`,JSON.stringify(message),null,()=>{resolve()});
 		});
 	};
 
@@ -165,13 +165,13 @@ export class Signaling extends NearMqtt {
 	}
 
 
-	disconnect(){
+	disconnect(callback=null){
 		console.log('Disconnect')
 		/*if (timerId) {  
 			clearTimeout(timerId);
 			timerId = 0;  
 		} */ 
-		this.end();
+		this.end(null,null,callback);
 	}
 
 	keepAlive() { 
@@ -330,7 +330,9 @@ class PeerConnection{
 				this.peer.addTrack(track,this.stream);
 			};
 		}
-		
+		this.mainChannel=this.createDataChannel("MainDataChannel",{negotiated:true,id:10});
+		this.proxyDataChannel=this.createDataChannel("ProxyDataChannel",{negotiated:true,id:11});
+
 		const answer = await this.peer.createAnswer(this.mediaConstraints)
 		try {
 			await this.peer.setLocalDescription(answer)
@@ -353,6 +355,8 @@ class PeerConnection{
 					this.peer.addTrack(track,this.stream);
 				};
 			}
+			this.mainChannel=this.createDataChannel("MainDataChannel",{negotiated:true,id:10});
+			this.proxyDataChannel=this.createDataChannel("ProxyDataChannel",{negotiated:true,id:11});	
 			//this.mainChannel=this.createDataChannel("MainDataChannel");
 			//this.proxyDataChannel=this.createDataChannel("ProxyDataChannel");
 			// create Offer
@@ -394,9 +398,9 @@ class PeerConnection{
 		return this.peer;
 	}
 
-	createDataChannel(label){
+	createDataChannel(label, options=null){
 		try {
-			let dataChannel = this.peer.createDataChannel(label);
+			let dataChannel = this.peer.createDataChannel(label,options);
 			dataChannel.onopen = (evt => this.emit(label, evt,this)).bind(this);
                 	dataChannel.onmessage = (evt => this.emit(label, evt, this)).bind(this);	
 			return dataChannel;
@@ -616,6 +620,14 @@ export class PeerConnectionMeet extends LitElement {
 
 	}
 
+
+	//-------------------------------------------------------------------
+	//Element removed from DOM
+	disconnectedCallback(){
+		this.disconnect();
+	}
+
+
 	onConnect(connack){
 		//signaling.send("all","peerConnected",{"from": this.clientId , "sessionId": this.sessionId});
 	}
@@ -701,9 +713,21 @@ export class PeerConnectionMeet extends LitElement {
                 video.srcObject = mediaStream;
         }
 
+	setStream(stream, peerId){
+		console.log('setStream', peerId);
+		let video;
+		if (peerId.startsWith("nearuser")) 
+                	video = this.shadowRoot.getElementById(peerId);
+		else
+			video = this.shadowRoot.getElementById("mainVideo");	
+		
+                video.srcObject = stream;
+        }
+
         onTrack(event, peerId){
 		console.log('ontrack', event, peerId);
-		this.setTrack(event.track, peerId);
+		//this.setTrack(event.track, peerId);
+		this.setStream(event.streams[0], peerId);
         }
 
 	onIceConnectionStateChange(event, data){
@@ -725,12 +749,16 @@ export class PeerConnectionMeet extends LitElement {
 
 	
 	disconnect(){
-		signaling.send("all","peerDisconnected",{"from": this.clientId , "sessionId": this.sessionId});
-		this.peers.forEach(peer=>{
-			if(peer)
-				peer.close();
-		})
-		//signaling.disconnect()
+		return new Promise((resolve,reject)=>{
+			signaling.send("all","peerDisconnected",{"from": this.clientId , "sessionId": this.sessionId})
+				.then(()=>{
+					this.peers.forEach(peer=>{
+						if(peer)
+							peer.close();
+					});
+					resolve();
+				});
+		});
 	}
 
 	onMainDataChannel(description,peerConnection){
@@ -755,7 +783,7 @@ export class PeerConnectionMeet extends LitElement {
 				overlay.innerHTML=scene.form;
 				for (let child of overlay.children) {
 					if(child.tagName.toLowerCase()=="near-vnc"){
-						child.connect(peerConnection.proxyDataChannel,null,"12345678");
+						child.connect(peerConnection.proxyDataChannel,null,null);
 					}
 				}
 
