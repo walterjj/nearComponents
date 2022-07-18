@@ -9,24 +9,6 @@
     "serve_prod": "es-dev-server -n --preserve-symlinks --open ru/",
     "build": "./build.sh"
   },
-  "bundledDependencies": [],
-  "dependencies": {
-    "@material/mwc-base": "latest",
-    "@material/mwc-button": "latest",
-    "@material/mwc-drawer": "latest",
-    "@material/mwc-formfield": "latest",
-    "@material/mwc-icon": "latest",
-    "@material/mwc-icon-button": "latest",
-    "@material/mwc-top-app-bar": "latest",
-    "@material/mwc-top-app-bar-fixed": "latest",
-    "@webcomponents/webcomponentsjs": "latest",
-    "amazon-cognito-identity-js": "latest",
-    "cookieconsent": "^3.1.1",
-    "lit-element": "latest",
-    "lit-html": "latest"
-  },
   "author": "WJJ",
-  "license": "ISC",
-  "devDependencies": {
-  }
+  "license": "ISC"
 }
