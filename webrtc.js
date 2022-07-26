@@ -273,13 +273,18 @@ class PeerConnection{
 			//console.log('candidate:', candidates[i])
 			this.emit("event",{ type: "ice", "candidate": candidates[i] });
 			let candidate = new RTCIceCandidate(candidates[i]);
-
-			console.log("Adding ICE candidate :" + JSON.stringify(candidate));
-			try {
-				await this.peer.addIceCandidate(candidate)
-			} catch (error) {
-				console.error("addIceCandidate error: " + JSON.stringify(error))
+			if (this.peer.currentRemoteDescription) {
+				try {
+					this.peer.addIceCandidate(candidate)
+				} catch (error) {
+					console.error("addIceCandidate error: " + JSON.stringify(error))
+				}
+			} else {
+				console.log('earlyCandidates:', candidate)
+				this.earlyCandidates.push(candidate);
 			}
+			console.log("Adding ICE candidate :" + JSON.stringify(candidate));
+			
 		}
 	}
 
@@ -444,12 +449,7 @@ class PeerConnection{
 	async onIceCandidate(event){
 		console.log('onIceCandidate!!', event)
 		if (event.candidate) {
-			if (this.peer.currentRemoteDescription) {
-				this.sendIceCandidate(this.peerId, event.candidate);
-			} else {
-				console.log('earlyCandidates:', event.candidate)
-				this.earlyCandidates.push(event.candidate);
-			}
+			this.sendIceCandidate(this.peerId, event.candidate);
 		}
 	}
 
