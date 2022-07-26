@@ -473,7 +473,14 @@ class PeerConnection{
 
 			console.log("setRemoteDescription OK");
 			if(this.earlyCandidates.length > 0){
-				this.sendIceCandidate(this.peerId, this.earlyCandidates);
+				for (let candidate of this.earlyCandidates) {
+					try{
+						this.peer.addIceCandidate(candidate);
+					}catch(e){
+						console.error("addIceCandidate error: " + e);
+					}
+				}
+				//this.sendIceCandidate(this.peerId, this.earlyCandidates);
 				this.earlyCandidates.length = 0
 			}
 		} catch (error) {
