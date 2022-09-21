@@ -437,13 +437,14 @@ export class NearApp extends LitElement {
         }
 
         drawerMenu() {
-                return html`
-        
+                let r=[];
+                if(this.component) r.push(html`${unsafeHTML(this.component.drawerMenu(this.page))}`); 
+                r.push (html`
                 ${this.navigationMenu?.items?.map(item => {
                         return item.items ? this.renderDrawerList(item) : this.renderDrawerItem(item)
-                })}
-               
-          `;
+                })}        
+                `);
+                return r;
         }
 
         menu() {
@@ -501,7 +502,8 @@ export class NearApp extends LitElement {
           <near-selector class="tabs" role="navigation" slot="actionItems">
           ${this.menu()}
           ${this.pageMenu()}
-          ${this.userExtra()}  
+          ${this.userExtra()}
+          ${this.component && this.component.navMenu ? this.component.navMenu() : ''}  
           </near-selector>
           <near-user
           style="padding:1em;" 
@@ -602,6 +604,10 @@ export class NearApp extends LitElement {
                 return import(NearUser.instance.baseURL + folder + name + '.js');
         }
 
+        internalPage() {
+                if(this.component) return html`${unsafeHTML(this.component.content(this.page))}`; 
+        }
+
         firstUpdated() {
                 document.body.removeAttribute('unresolved');
                 this.nearLocation = new NearLocation(
@@ -612,7 +618,7 @@ export class NearApp extends LitElement {
                         window.onresize = this.checkConvertible.bind(this);
                         setTimeout((() => { this.checkConvertible() }).bind(this), 500);
                 }
-
+                if(this.component && this.component.firstUpdated) this.component.firstUpdated(this);
         }
 
         checkConvertible() {
@@ -641,6 +647,7 @@ export class NearApp extends LitElement {
 
         updated() {
                 super.updated();
+                if(this.component && this.component.updated) this.component.updated(this);
                 //this.pageChanged(this.page);
         }
 
@@ -832,6 +839,19 @@ export class NearApp extends LitElement {
                                 ga('send', 'pageview');
                         })();
                 }
+                if (this.component) {
+                        this.component.destroy && this.component.destroy(this);
+                        this.component=null;
+                }        
+                if(this.page.startsWith('app/')){
+                        this.importComponent("component").then(component=>{
+                                this.component=component;
+                                this.component.init && this.component.init(this,this.page,NearUser,{LitElement,html,css});
+                                this.requestUpdate();
+                        })
+                        .catch(()=>this.component=null);
+                        return;        
+                } 
 
                 this.meta = null; this.content = null;
                 let content = document.querySelector("#content");
@@ -1019,3 +1039,52 @@ export class NearApp extends LitElement {
 }
 
 window.customElements.define('near-app-base', NearApp);
+
+
+class DrawerButton extends LitElement {
+        static get styles() {
+                return css`
+                        :host{
+                                display:flex;
+                                align-items:center;
+                                padding-left:3em;
+                                
+                        }
+                        a{
+                                text-decoration:none;
+                                display:flex;
+                                padding:1em 0.5em;
+                                width:100%;
+                                color:inherit;
+                        }
+                        :host(:hover){
+                                opacity:0.8;
+                        }
+                        span{
+                                padding-left:1em;
+                        }
+                `;
+        }
+        render() {
+                return html`
+                <a is="near-route" href="${this.href}">
+                        <mwc-icon>${this.icon}</mwc-icon>        
+                        <span><slot></slot></span>
+                 </a>
+                `
+        }
+
+        static get properties() {
+                return {
+                        icon: String,
+                        href: String,
+                };
+        }
+}
+
+try {
+    window.customElements.define('drawer-button', DrawerButton);
+}
+catch(e) {
+
+}
