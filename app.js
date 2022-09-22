@@ -9,7 +9,8 @@ import { TopAppBarFixed } from '@material/mwc-top-app-bar-fixed'
 
 import { IconButton } from '@material/mwc-icon-button'
 import { Icon } from '@material/mwc-icon'
-
+import { Menu } from '@material/mwc-menu';
+import '@material/mwc-list';
 
 
 
@@ -421,7 +422,7 @@ export class NearApp extends LitElement {
                                 .forEach(group=>{
                                         let name=group.substring(4);
                                         r.push(
-                                                html`<drawer-button is="near-route" icon="${icon}" name="${name}" href="/app/${name}/">${name.replace('_', ' ')}</drawer-button>`
+                                                html`<mwc-list-item><drawer-button is="near-route" icon="${icon}" name="${name}" href="/app/${name}/">${name.replace('_', ' ')}</drawer-button></mwc-list-item>`
                                         );
                                 });
                 }
@@ -478,7 +479,7 @@ export class NearApp extends LitElement {
                 if (NearUser.canCreate() || NearUser.canEdit())
                         return html`
           <a name="edit" href="#" @click="${this.openMenu}" >Edit...
-            <near-menu id="edit-menu">
+            <mwc-menu id="edit-menu">
             <near-list>
             ${NearUser.canCreate() ?
                                         html`<near-list-item @click="${this.newArticle}"  label="New Article..."></near-list-item>
@@ -500,7 +501,7 @@ export class NearApp extends LitElement {
                                         : ''}
                
             </near-list>  
-            </near-menu></a>
+            </mwc-menu></a>
          `
                 return ''
 
@@ -977,7 +978,10 @@ export class NearApp extends LitElement {
 
         openMenuByName(name) {
                 let menu = this.shadowRoot.getElementById(name + '-menu');
-                menu && menu.toggleMenu();
+                if (menu instanceof Menu) 
+                        menu.open=true;
+                else 
+                        menu && menu.toggleMenu();
 
         }
         openMenu(e) {
@@ -1065,7 +1069,7 @@ class DrawerButton extends LitElement {
                         :host{
                                 display:flex;
                                 align-items:center;
-                                padding-left:1em;
+                                padding-left:0em;
                                 
                         }
                         a{
@@ -1082,6 +1086,7 @@ class DrawerButton extends LitElement {
                         span{
                                 padding-left:1em;
                         }
+                        mwc-icon{font-variant:none;}
                 `;
         }
         render() {
