@@ -20,6 +20,7 @@ import { render } from 'lit-html';
 import { NearLocation, NearRoute } from './route.js';
 import { NearContent } from './content.js'
 import { NearArticle } from './article.js'
+import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 
 
 export class NearApp extends LitElement {
@@ -412,6 +413,21 @@ export class NearApp extends LitElement {
                 `
         }
 
+        renderDrawerApps(icon="label") {
+                let r=[];
+                if(NearUser.instance && NearUser.instance.groups){
+                        NearUser.instance.groups
+                                .filter(group=>group.startsWith("app:"))
+                                .forEach(group=>{
+                                        let name=group.substring(4);
+                                        r.push(
+                                                html`<drawer-button is="near-route" icon="${icon}" name="${name}" href="/app/${name}/">${name.replace('_', ' ')}</drawer-button>`
+                                        );
+                                });
+                }
+                return r;
+        }
+
         renderMenuItem(item) {
                 return html`
                 <a class="topbar-item" is="near-route" href="${item.href}">${item.label}</a>
@@ -436,6 +452,7 @@ export class NearApp extends LitElement {
         `
         }
 
+
         drawerMenu() {
                 let r=[];
                 if(this.component) r.push(html`${unsafeHTML(this.component.drawerMenu(this.page))}`); 
@@ -444,6 +461,7 @@ export class NearApp extends LitElement {
                         return item.items ? this.renderDrawerList(item) : this.renderDrawerItem(item)
                 })}        
                 `);
+                r.push(this.renderDrawerApps());
                 return r;
         }
 
@@ -1047,12 +1065,13 @@ class DrawerButton extends LitElement {
                         :host{
                                 display:flex;
                                 align-items:center;
-                                padding-left:3em;
+                                padding-left:1em;
                                 
                         }
                         a{
                                 text-decoration:none;
                                 display:flex;
+                                align-items:center;
                                 padding:1em 0.5em;
                                 width:100%;
                                 color:inherit;
