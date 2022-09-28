@@ -191,6 +191,7 @@ export class NearUser extends LitElement {
     this.name="";
     this.nickname="";
     this.website="";
+    this.extra={};
     //this.psw="";
     this.email="";
     this.phone="";
@@ -365,7 +366,7 @@ export class NearUser extends LitElement {
      </mwc-formfield>
      <mwc-formfield label="Password" alignEnd>
        <input name="psw" id="psw" 
-         type="password" .value="" @change="${this.changePsw}">
+         type="password" value="" @change="${this.changePsw}">
      </mwc-formfield>    
      <mwc-button @click="${this.authenticate}"  >${i18n`authenticate`}</mwc-button>
      <div id="message">${this.message}</div> 
@@ -379,6 +380,16 @@ export class NearUser extends LitElement {
   }
 
   updated(changedProperties) {
+    if(this.state==status.SIGNIN) { 
+      if("PasswordCredential" in window) {
+        navigator.credentials.get({password:true}).then(cred=>{      
+          if(cred) {
+            this.email=this.shadowRoot.getElementById("email").value=cred.id;
+            this.shadowRoot.getElementById("psw").value=cred.password;
+          }
+        });
+      }
+    }
     changedProperties.forEach((oldValue, propName) => {
       //console.log(`${propName} changed. oldValue: ${oldValue}`);
       if(propName=="name") { 
@@ -557,7 +568,10 @@ export class NearUser extends LitElement {
      <mwc-formfield label="${i18n`Website`}" alignEnd>
        <input nclass="mdc-text-field__input" name="website" id="website" 
          type="text" .value="${this.website}" nchange="${(e)=>this.website=e.target.value}">
-     </mwc-formfield>     
+     </mwc-formfield>
+     <mwc-formfield label="${i18n`Extra`}" alignEnd>
+       <textarea  name="extra" id="extra">${JSON.stringify(this.extra,null,2)}</textarea>  
+     </mwc-formfield>        
           
      <div id="message">${this.message}</div>
            
@@ -1154,7 +1168,7 @@ export class NearUser extends LitElement {
             return;
         }
         result.forEach(attr => {
-          //console.log('attribute ' + attr.getName() + ' has value ' + attr.getValue());
+          console.log('attribute ' + attr.getName() + ' has value ' + attr.getValue());
           if(attr.getName()=="email") this.email=attr.getValue();
           if(attr.getName()=="name") this.name=attr.getValue();
           if(attr.getName()=="nickname") this.nickname=attr.getValue();
@@ -1162,6 +1176,14 @@ export class NearUser extends LitElement {
           if(attr.getName()=="sub") this.sub=attr.getValue();
           if(attr.getName()=="cognito:username") this.username=attr.getValue();
           if(attr.getName()=="picture") this.picture=attr.getValue();
+          if(attr.getName()=="custom:properties") {
+            try {
+              this.extra=JSON.parse(attr.getValue());
+            } catch (error) {
+              console.log("properties", error);
+            } 
+            
+          }
         }); 
         this.userAttributes=result;
         this.state=status.LOGGED;
@@ -1197,6 +1219,12 @@ export class NearUser extends LitElement {
         Value : this.shadowRoot.getElementById("website").value
       })
     )
+    attributeList.push(
+      new CognitoUserAttribute({
+        Name : 'custom:properties',
+        Value : this.shadowRoot.getElementById("extra").value
+      })
+    )
 
 
     
@@ -1219,6 +1247,18 @@ export class NearUser extends LitElement {
                 Username : this.email, // your username here
                 Password : this.shadowRoot.getElementById("psw").value, // your password here
         };
+        if ("PasswordCredential" in window) {
+          let credential = new PasswordCredential({
+            id: this.shadowRoot.getElementById("email").value,
+            name: this.name, // In case of a login, the name comes from the server.
+            password: authenticationData.Password
+          }); 
+          navigator.credentials.store(credential).then(() => {
+            console.info("Credential stored in the user agent's credential manager.");
+          }, (err) => {
+            console.error("Error while storing the credential: ", err);
+          });
+        }
         var authenticationDetails = 
                 new AuthenticationDetails(authenticationData);
         this.cognitoUser =new CognitoUser({ Username : this.email, Pool : userPool});
