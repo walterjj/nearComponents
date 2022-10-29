@@ -42,7 +42,7 @@ export class Signaling extends NearMqtt {
 
 	removeListeners(command,  from) {
 		this.listeners = this.listeners.filter(function (listener) {
-			return listener.command != command && listener.from != from;
+			return listener.command != command || listener.from != from;
 		});
 	}
 
@@ -157,7 +157,7 @@ export class Signaling extends NearMqtt {
 				"command":"peerDisconnected",
 				"from":"${this.clientId}"
 			}`,
-			qos:1,
+			qos:0,
 			retain:false
 		}
 		console.log('Connecting to MQTT Signaling');
@@ -201,17 +201,7 @@ let iceServers=[
 		"stun:stun2.l.google.com:19302",
 		"stun:stun3.l.google.com:19302"
 		]
-	},
-	{
-	  urls: "turn:openrelay.metered.ca:80",
-	  username: "openrelayproject",
-	  credential: "openrelayproject",
-	},
-	{
-	  urls: "turn:openrelay.metered.ca:443",
-	  username: "openrelayproject",
-	  credential: "openrelayproject",
-	},
+	}
 ]
 
 class PeerConnection{ 
@@ -223,6 +213,7 @@ class PeerConnection{
                 this.peerConfig = {
                         //iceTransportPolicy: "relay",
 			sdpSemantics: 'unified-plan',
+                        bundlePolicy: 'max-bundle',
                         iceServers: iceServers || []
                 };
                 this.pcOptions =  { "optional": [{ "DtlsSrtpKeyAgreement": true }] };
@@ -232,8 +223,12 @@ class PeerConnection{
                 this.audioChannel = null
                 this.peerId = peerId
                 this.stream=stream
+                this.makingOffer = false;
+	        this.ignoreOffer = false;
+	        this.isSettingRemoteAnswerPending = false;
+	        this.deferNegotiation = false;
 		this.setPeerId(peerId);
-		this.createPeerConnection();
+		this.polite = false;
 
         }
 
@@ -242,11 +237,27 @@ class PeerConnection{
         }
 
 	setPeerId(id) {
-		this.peerId = id
-		signaling.on('answer', this.onAnswer.bind(this), this.peerId)
-		
-		signaling.on('addIceCandidate', this.onAddIceCandidate.bind(this), this.peerId);
+                if(id!=this.peerId){
+			this.peer=null;
+			this.peerId = id			
+		}
+		this.checkPeer();
 	}
+
+	checkPeer(){
+		if(this.peer && this.peer.connectionState=='closed'){
+			this.peer=null;
+		}
+                if(!this.peer){
+			this.deferNegotiation=true;
+                        this.createPeerConnection();
+                }
+	}
+
+        
+        getPeerId() {
+                return this.peerId;
+        }
 
 	setPeerType(type){
 		this.peerType = type	
@@ -262,41 +273,22 @@ class PeerConnection{
 
 	async connect(stream=null){
 		if (stream) this.stream=stream;
-		this.createOffer();
+		this.deferNegotiation = true;
+		this.polite=true;
+		this.makeOffer();
+		//this.createOffer();
 	}
 
-	async onAddIceCandidate(data){
-		const candidates = data.candidates
-		console.log('addIceCandidate ', this.peer.iceConnectionState);
-		//if(this.peer.iceConnectionState!="gathering") return;
-		for (let i = 0; i < candidates.length; i++) {
-			//console.log('candidate:', candidates[i])
-			this.emit("event",{ type: "ice", "candidate": candidates[i] });
-			let candidate = new RTCIceCandidate(candidates[i]);
-			if (this.peer.currentRemoteDescription) {
-				try {
-					this.peer.addIceCandidate(candidate)
-				} catch (error) {
-					console.error("addIceCandidate error: " + JSON.stringify(error))
-				}
-			} else {
-				console.log('earlyCandidates:', candidate)
-				this.earlyCandidates.push(candidate);
-			}
-			console.log("Adding ICE candidate :" + JSON.stringify(candidate));
-			
-		}
-	}
 
 	close(){
-		if (this.peer) {
+		if (this.peer && this.peer.connectionState != 'closed') {
 			this.peer.close();
-			signaling.removeListeners("addIceCandidate", this.peerId);
-			signaling.removeListeners("answer", this.peerId); 
+
 		}	 
 	}
+	
 
-	async disconnect(){
+	async disconnect1(){
 		if (this.peer) {
 			this.close();
 			try {
@@ -312,6 +304,41 @@ class PeerConnection{
 		}
 	}
 
+        async disconnect() {
+		if (this.peer) {
+			this.closing=true;
+			this.peer.close();
+			return new Promise((resolve, reject) => {
+				let time=Date.now();
+				while(Date.now()-time<1000){					
+					let state = this.getConnectionState();
+					console.log('connection state:', state);
+					if(state=='closed'){
+						this.emit("iceconnectionstatechange", {  status:"closed"});
+						this.emit("connectionstatechange", {  status:"closed"});
+						this.emit("signalingstatechange", { status:"closed"});
+						this.emit("hangup",{ status:"disconnected"});
+						//peer=null;
+						this.closing=false;
+						resolve(true);
+						this.emit(
+							"collisionstatechange",
+							{"status": ""});
+						return;
+					}
+					this.emit("iceconnectionstatechange", {status:"aborted"});
+					this.emit("connectionstatechange", {status:"aborted"});
+					this.emit("signalingstatechange", {status:"aborted"});
+					this.emit("hangup", {status:"disconnected"});
+				};
+				this.closing=false;
+				//peer=null;
+				resolve(true);
+			})
+		}
+		return Promise.resolve(true);
+	}
+
 	getConnectionState(){
 		if (this.peer)
 			return this.peer.iceConnectionState;
@@ -319,84 +346,183 @@ class PeerConnection{
 			return "uninitialized"
 	}
 
-
-	async onAnswer(answer){
-		console.log('onAnswer:', answer)
-		await this.setRemoteDescription(answer);
-		
-	}
-
-	async onOffer(offer){
-		console.log('onOffer:', offer)
-		await this.setRemoteDescription(offer)
-		if (this.stream) {
-			//this.peer.addStream(stream);
-			for ( let track of this.stream.getTracks()){
-				this.peer.addTrack(track,this.stream);
-			};
+	setTracks(){
+		let transceivers=this.peer.getTransceivers();
+		let size = transceivers.length;
+		console.log("setTracks transceivers:",size);
+		if(this.stream){
+			this.stream.getTracks().forEach(track => {
+				let transceiver=transceivers.find(t=>t.sender.track==null || t.sender.track.kind==track.kind);
+				if(transceiver)
+					transceiver.sender.replaceTrack(track);
+				else
+					transceiver=this.peer.addTransceiver(track);			
+			});
 		}
-		this.mainChannel=this.createDataChannel("MainDataChannel",{negotiated:true,id:10});
-		this.proxyDataChannel=this.createDataChannel("ProxyDataChannel",{negotiated:true,id:11});
-
-		const answer = await this.peer.createAnswer(this.mediaConstraints)
+	}
+	
+	async makeOffer(){
 		try {
-			await this.peer.setLocalDescription(answer)
-		} catch (error) {
-			console.error('Error setLocalDescription: ', error)
+			this.makingOffer = true;
+			this.earlyCandidates.length = 0;
+			this.setTracks();
+			await this.peer.setLocalDescription();
+			//signaling.send({description: peer.localDescription});
+			signaling.send(this.peerId, 'signaling', { 
+				description: this.peer.localDescription.toJSON(),
+			});
+			this.emit(
+                                "collisionstatechange",
+				{       "status": "offer sent -->"
+                                });
+		} catch (err) {
+			console.error(err);
+		} finally {
+			this.makingOffer = false;
+			this.deferNegotiation = false;
 		}
-		let data={
-			sdp:answer.sdp,
-			type:answer.type
-		}
-		signaling.send(this.peerId, 'answer', data)
+
 	}
 
-	async createOffer(){
-		try {		
-			let peerid = this.peerId
-			if (this.stream) {
-				//this.peer.addStream(stream);
-				for ( let track of this.stream.getTracks()){
-					this.peer.addTrack(track,this.stream);
-				};
-			}
-			this.mainChannel=this.createDataChannel("MainDataChannel",{negotiated:true,id:10});
-			this.proxyDataChannel=this.createDataChannel("ProxyDataChannel",{negotiated:true,id:11});	
-			//this.mainChannel=this.createDataChannel("MainDataChannel");
-			//this.proxyDataChannel=this.createDataChannel("ProxyDataChannel");
-			// create Offer
-			const offer = await this.peer.createOffer(this.mediaConstraints)
-			console.log("Create Offer, send to ", offer, this.peerId)
-			await this.peer.setLocalDescription(offer)
-			
-			let data = { 
-				peerid: peerid,
-				sdp: offer.sdp,
-				type: offer.type
-			}
-			console.log("Local Description", data, offer)
-			signaling.send(peerid, 'call', data)
-			
-			
-		} catch (e) {
-			this.close();
-			console.error("connect error: " + e);
-		}
+	// https://www.rfc-editor.org/rfc/rfc8838#name-pairing-newly-gathered-loca
+	// https://developer.mozilla.org/es/docs/Web/API/RTCPeerConnection
+        async onSignaling ({ description, candidate }){
+		this.checkPeer();
+                this.deferNegotiation = false;
+                try {
+                        if (description) {
+                                const offerCollision = (description.type == "offer") &&
+                                                (this.makingOffer || this.peer.signalingState != "stable");
+
+                                this.ignoreOffer = !this.polite && offerCollision;
+                                if (this.ignoreOffer) {
+                                        this.emit(
+                                                "collisionstatechange",
+                                                {       "status": "--> offer ignored"
+                                                });
+                                        
+                                        return;
+                                }
+                                if(offerCollision ){
+
+                                }
+                                await this.peer.setRemoteDescription(description);
+                                console.log("Remote description set:", description.type, " transceivers:", this.peer.getTransceivers().length);
+                                if(this.earlyCandidates.length > 0){
+                                        for (let candidate of this.earlyCandidates) {
+                                                try{
+                                                        this.peer.addIceCandidate(candidate);
+                                                }catch(e){
+                                                        console.error("addIceCandidate error: " + e);
+                                                }
+                                        }
+                                        this.earlyCandidates.length = 0
+                                }
+                                let eventMsg = "--> " + description.type + " accepted"
+                                if (description.type == "offer") {
+                                        this.deferNegotiation = true;
+					this.setTracks();
+                                        await this.peer.setLocalDescription();
+                                        signaling.send(this.peerId, 'signaling', {description:this.peer.localDescription.toJSON()});
+                                        this.deferNegotiation = false;
+                                        eventMsg+=", answer sent -->";
+                                }
+                                this.emit(
+                                        "collisionstatechange",
+                                        { "status": eventMsg
+                                        });
+                        } else if(candidate) {
+                                try {
+                                        if (this.peer.remoteDescription) {
+                                                await this.peer.addIceCandidate(candidate)
+                                        } else {
+                                                this.earlyCandidates.push(candidate);
+                                        }
+                                } catch (err) {
+                                        console.error("addIceCandidate error: ", err);
+                                        //if (!ignoreOffer) throw err; // Suppress ignored offer's candidates
+                                }
+                        }
+                } catch(err) {
+                        console.error(err);
+                }
 	}
 
+	
 
-	createPeerConnection(){
+        async onNegotiationNeeded(){
+                if(!this.deferNegotiation){
+                        this.makeOffer();
+                }
+
+        }
+
+        onSignalingStateChange(evt){
+                console.log("signaling state change: " + this.peer.signalingState);
+                this.emit("signalingstatechange",{"status": this.peer.signalingState});
+		this.meet.onSignalingStateChange(this,this.peer.signalingState);
+		if(this.peer.signalingState=="closed") this.peer=null;
+
+        }
+
+        onConnectionStateChange(evt){
+                if(!this.peer) return;
+                console.log("connection state change: " + this.peer.connectionState);
+                if(!this.closing) {
+                        if (this.peer.connectionState === "failed") {
+                                this.disconnect();
+                        }
+                }
+                
+                this.emit("connectionstatechange",
+                        {       "status":this.peer.connectionState,
+                                "peerId": this.peerId
+                        });
+                if(this.peer.connectionState=="closed"){
+                        signaling.send(this.peerId, "peerDisconnected", {
+                                peerid: this.peerId
+                        })
+                        console.log ("peer.iceConnectionState",this.peer.iceConnectionState);
+                        this.emit("peerDisconnected",{"status": "disconnected"});
+                        
+                }
+        }
+
+        onIceGatheringStateChange(evt){
+                console.log("ice gathering state change: " + this.peer.iceGatheringState);
+                switch(this.peer.iceGatheringState) {
+                        case "new":
+                                this.earlyCandidates.length = 0;
+                          break;
+                        case "gathering":
+                          /* collection of candidates has begun */
+                          break;
+                        case "complete":
+                          /* collection of candidates is finished */
+                          break;
+                }
+
+        }
+
+        createPeerConnection(){
 		console.log("createPeerConnection config: " + JSON.stringify(this.peerConfig) + " option: " + JSON.stringify(this.pcOptions));
-		this.peer = new RTCPeerConnection(this.peerConfig, this.pcOptions);
+		if(this.peer) this.peer=null;
+                this.peer = new RTCPeerConnection(this.peerConfig);
 		// clear early candidates
 		this.earlyCandidates.length = 0;
 
-		this.peer.onicecandidate = this.onIceCandidate.bind(this);
+		this.peer.onicecandidate = ({candidate}) => signaling.send(this.peerId, 'signaling', { candidate });
 		this.peer.ontrack =  this.onTrack.bind(this); 
 		this.peer.oniceconnectionstatechange = this.onIceConnectionStateChange.bind(this);
+                this.peer.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
 		this.peer.ondatachannel = this.onDataChannel.bind(this); 
-		//this.peer.onconnectionstatechange = (event,state) => { console.log("connection state:",event,state) };
+                this.peer.onsignalingstatechange = this.onSignalingStateChange.bind(this);
+                this.peer.onconnectionstatechange = this.onConnectionStateChange.bind(this);
+                this.peer.onicegatheringstatechange = this.onIceGatheringStateChange.bind(this);
 
+		//this.peer.onconnectionstatechange = (event,state) => { console.log("connection state:",event,state) };
+                this.mainChannel=this.createDataChannel("MainDataChannel",{negotiated:true,id:10});
+		this.proxyDataChannel=this.createDataChannel("ProxyDataChannel",{negotiated:true,id:11});
 
 
 		console.log("Created RTCPeerConnnection with config: " + JSON.stringify(this.peerConfig) + "option:" + JSON.stringify(this.pcOptions));
@@ -417,6 +543,18 @@ class PeerConnection{
 
         async onIceConnectionStateChange(evt){
 		//this.meet.onIceConnectionStateChange(evt, this.peerId);
+                if (this.peer.iceConnectionState === "failed") {
+                        this.peer.restartIce();
+                }
+		/*
+			if(data.connectionState=="complete"){
+				for(let receiver of data.peer.getReceivers()){
+					this.setTrack(receiver.track,data.peerId);
+				}
+			}
+			
+			//this.setTrack(event.track, peerId);
+		*/
                 this.meet.onIceConnectionStateChange(evt.type,{
                         connectionState: (this.peer && this.peer.iceConnectionState) || "disconnected",
 			peerId: this.peerId,
@@ -445,48 +583,6 @@ class PeerConnection{
 		evt.channel.onopen = (evt => this.emit(channelName, evt,this)).bind(this);
                 evt.channel.onmessage = (evt => this.emit(channelName, evt, this)).bind(this);						
         }
-
-	async onIceCandidate(event){
-		console.log('onIceCandidate!!', event)
-		if (event.candidate) {
-			this.sendIceCandidate(this.peerId, event.candidate);
-		}
-	}
-
-
-	sendIceCandidate (peerid, candidates){
-		if (Array.isArray(candidates) === false) // Always send an array
-			candidates = [candidates]
-
-		console.log('sendIceCandidate -> ', this.peerId, candidates)
-		signaling.send(peerid, 'addIceCandidate', {
-			peerid: peerid,
-			candidates: candidates
-		});
-	}
-
-	async setRemoteDescription(dataJson){
-		try {
-			var descr = new RTCSessionDescription(dataJson);
-
-			await this.peer.setRemoteDescription(descr)
-
-			console.log("setRemoteDescription OK");
-			if(this.earlyCandidates.length > 0){
-				for (let candidate of this.earlyCandidates) {
-					try{
-						this.peer.addIceCandidate(candidate);
-					}catch(e){
-						console.error("addIceCandidate error: " + e);
-					}
-				}
-				//this.sendIceCandidate(this.peerId, this.earlyCandidates);
-				this.earlyCandidates.length = 0
-			}
-		} catch (error) {
-			console.error("setRemoteDescription error:" + JSON.stringify(error));
-		}
-	}
 
 	sendCommand(command, data = null){
 		if (this.peer) {
@@ -558,6 +654,16 @@ export class PeerConnectionMeet extends LitElement {
 		@media screen and (max-width: 600px) {
 			#peers{flex-direction:row; left:auto; width:auto;right:0; height:80px}
 		}
+		#call_end{
+			--mdc-theme-secondary: red;
+			--mdc-theme-on-secondary: white;
+		}
+		#call_controls{
+			position:fixed; bottom:100; right:0;
+			opacity:0.7;
+			display:flex;
+			flex-direction:column;
+		}
                 `;
         }
 
@@ -580,6 +686,10 @@ export class PeerConnectionMeet extends LitElement {
 		<div id="overlay"></div>
 		<div id="status"></div>
                 ${this.renderPeers()}
+		<div id="call_controls">
+		<mwc-fab id="call" mini icon="call" @click="${this.connect}"></mwc-fab>
+		<mwc-fab id="call_end" mini icon="call_end" @click="${this.disconnect}"></mwc-fab>
+		</div>
                 <div id="controls" class="box">
                 </div>
                 `
@@ -621,12 +731,13 @@ export class PeerConnectionMeet extends LitElement {
 		signaling.on("close", this.onDisconnect.bind(this));
 		signaling.on("peerConnected", this.onPeerConnected.bind(this));
 		signaling.on("peerDisconnected", this.onPeerDisconnected.bind(this));
-		signaling.on("call", this.onCall.bind(this));
+                signaling.on("signaling", this.onSignaling.bind(this));
                 this.stream= await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-		signaling.send("all","peerConnected",{"from": this.clientId , "sessionId": this.sessionId});
-
 	}
 
+	async connect(){
+		signaling.send("all","peerConnected",{"from": this.clientId , "sessionId": this.sessionId});
+	}
 
 	//-------------------------------------------------------------------
 	//Element removed from DOM
@@ -642,37 +753,42 @@ export class PeerConnectionMeet extends LitElement {
 	onDisconnect(){
 		for(const [peerId, peer] of this.peers){
 			peer.close();
+			
+		}
+		this.peers.clear();
+	}
+
+
+	removePeer(peerId){
+		let peer=this.peers.get(peerId);
+		if(peer) {
+			peer.close();
+			this.peers.delete(peerId);
+			this.onPeerRemoved(peer);
 			if(peerId.startsWith("nearuser")){
 				let video=this.shadowRoot.getElementById(peerId);
 				if(video) video.remove();
 			}
 		}
-		this.peers.clear();
 	}
 
 	onPeerConnected(data){
 		console.log('onPeerConnected', data)
 		if(data.from==this.clientId) return;
-		if(this.peers.has(data.from)) return;
-		let peer=new PeerConnection(data.from,this,this.stream);
-		//peer.on("track", this.onTrack.bind(this));
-		this.peers.set(data.from,peer);
-		this.onPeerAdded(peer);
+		//if(this.peers.has(data.from)) return;
+		let peer = this.peers.get(data.from);
+		if(!peer){
+			//let stream=data.from.startsWith("nearuser")? this.stream : null;
+			peer=new PeerConnection(data.from,this,this.stream);
+			//peer.on("track", this.onTrack.bind(this));
+			this.peers.set(data.from,peer);
+			this.onPeerAdded(peer);
+		}
 		peer.connect();
 	}
 
 	onPeerDisconnected(data){
-		let peer=this.peers.get(data.from);
-		if(peer){
-			peer.close();
-			if(data.from.startsWith("nearuser")){
-				let video=this.shadowRoot.getElementById(data.from);
-				if(video) video.remove();
-			}	
-			this.peers.delete(data.from)
-			this.onPeerRemoved(peer);		
-		}
-		
+		this.removePeer(data.from);		
 	}
         
 	onPeerAdded(peer){
@@ -696,14 +812,20 @@ export class PeerConnectionMeet extends LitElement {
 		console.log("onPeerRemoved", peer);		
 	}
 
-	onCall(data){
-		console.log('call data: ', data)
+	
+
+        onSignaling(data){
+		console.log('signaling data: ', data)
 		if (data.from == this.clientId) return;
-		let peer=new PeerConnection(data.from,this,this.stream);
+		let peer= this.peers.get(data.from);
+                if(!peer){ 
+			//let stream=data.from.startsWith("nearuser")? this.stream : null;
+                        peer=new PeerConnection(data.from,this,this.stream);
+                        this.onPeerAdded(peer);
+		        this.peers.set(data.from,peer);
+                }
 		//peer.on("track", this.onTrack.bind(this));
-		this.onPeerAdded(peer);
-		this.peers.set(data.from,peer);
-		peer.onOffer(data);
+		peer.onSignaling(data);
 	}
 
 
@@ -715,10 +837,11 @@ export class PeerConnectionMeet extends LitElement {
 		else
 			video = this.shadowRoot.getElementById("mainVideo");	
 		let mediaStream=video.srcObject || new MediaStream();
-		console.log("mediaStream", mediaStream,video);
+		let oldTrack=mediaStream.getTracks().find(t => t.kind==track.kind);
+		if(oldTrack) mediaStream.removeTrack(oldTrack);
 		mediaStream.addTrack(track);
-                video.srcObject = mediaStream;
-        }
+		video.srcObject=mediaStream;
+	}
 
 	setStream(stream, peerId){
 		console.log('setStream', peerId);
@@ -733,20 +856,22 @@ export class PeerConnectionMeet extends LitElement {
 
         onTrack(event, peerId){
 		console.log('ontrack', event, peerId);
-		//this.setTrack(event.track, peerId);
-		this.setStream(event.streams[0], peerId);
+		//if(event.transceiver.direction=="recvonly")
+		this.setTrack(event.track, peerId);
+		//this.setStream(event.streams[0], peerId);
         }
 
-	onIceConnectionStateChange(event, data){
-		console.log(event, data);
-		if(data.connectionState=="complete"){
-			for(let receiver of data.peer.getReceivers()){
-				this.setTrack(receiver.track,data.peerId);
-			}
+	onIceConnectionStateChange(event, peerId){
+		console.log('onIceConnectionStateChange', event, peerId);
+	}
+
+	onSignalingStateChange(peer, state){
+		console.log('onSignalingStateChange', peer.peerId, state);
+		if(state == "closed"){
+			let peerId=peer.peerId;
+			this.removePeer(peerId);
 		}
-		
-		//this.setTrack(event.track, peerId);
-        }
+	}
 
 	sendCommand (command, data) {
 		this.peers.forEach(peer=>{
@@ -826,7 +951,7 @@ export class PeerConnectionMeet extends LitElement {
 			return;
 		}
 		else if(eventName=="iceconnectionstatechange")
-			this.shadowRoot.getElementById("status").innerHTML=eventName+' '+evt.connectionState; //+ " " + JSON.stringify(data);
+			this.shadowRoot.getElementById("status").innerHTML=eventName+' '+evt.status; //+ " " + JSON.stringify(data);
 		this.dispatchEvent(new CustomEvent(eventName, {detail: evt}));
 	}
 }
