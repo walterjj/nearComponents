@@ -61,7 +61,7 @@ export class Signaling extends NearMqtt {
 
 
 	setupEvents(){
-		super.setupEvents();
+		//super.setupEvents();
 		this.client.on('connect', function (connack) {
                         console.log('connect ', this.sessionId, '/',this.clientId);
                         this.connected=true;
@@ -111,7 +111,7 @@ export class Signaling extends NearMqtt {
                 this.client.on('error', function (error) {
                           console.log('error',error);     
                 }.bind(this))
-
+		this.client.on('message',this.onMessage.bind(this));
 	}
 
 	onMessage(topic,msg,packet){
@@ -349,14 +349,15 @@ class PeerConnection{
 	setTracks(){
 		let transceivers=this.peer.getTransceivers();
 		let size = transceivers.length;
-		console.log("setTracks transceivers:",size);
+		console.log("setTracks transceivers:",transceivers,size);
 		if(this.stream){
 			this.stream.getTracks().forEach(track => {
-				let transceiver=transceivers.find(t=>t.sender.track==null || t.sender.track.kind==track.kind);
+				let transceiver=transceivers.find(t=>(t.sender.track==null || t.sender.track.kind==track.kind));
 				if(transceiver)
 					transceiver.sender.replaceTrack(track);
 				else
-					transceiver=this.peer.addTransceiver(track);			
+					transceiver=this.peer.addTransceiver(track);
+				transceiver.direction = 'sendrecv';				
 			});
 		}
 	}
@@ -421,8 +422,9 @@ class PeerConnection{
                                 let eventMsg = "--> " + description.type + " accepted"
                                 if (description.type == "offer") {
                                         this.deferNegotiation = true;
-					this.setTracks();
+					
                                         await this.peer.setLocalDescription();
+					this.setTracks();
                                         signaling.send(this.peerId, 'signaling', {description:this.peer.localDescription.toJSON()});
                                         this.deferNegotiation = false;
                                         eventMsg+=", answer sent -->";
@@ -626,10 +628,10 @@ export class PeerConnectionMeet extends LitElement {
 		}
 		#overlay{
 			position:absolute;
-			top:0;
+			top:100px;
 			left:0;
 			width:100%;
-			height:100%;
+			bottom:0;
 		}
 		#mainVideo.contain {
 			object-fit: contain;
@@ -866,7 +868,14 @@ export class PeerConnectionMeet extends LitElement {
 	}
 
 	onSignalingStateChange(peer, state){
+		let peerId=peer.peerId;
+		let video;
 		console.log('onSignalingStateChange', peer.peerId, state);
+		if (peerId.startsWith("nearuser")) 
+                	video = this.shadowRoot.getElementById(peerId);
+		else
+			video = this.shadowRoot.getElementById("mainVideo");
+		video.title=state;	
 		if(state == "closed"){
 			let peerId=peer.peerId;
 			this.removePeer(peerId);
