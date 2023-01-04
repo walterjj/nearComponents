@@ -107,34 +107,48 @@ export class NearUser extends LitElement {
   return css`
       :host > near-modal{ position:fixed;height:100vh; top:0; left:0; bottom:0; right:0; background-color: rgba(0,0,0,.5); display:flex; justify-content:center;align-items:center;padding:2em }
       :host([hidden]) { display: none; }
-      near-modal a{font-size:-3;color:#999;cursor:pointer}
+      near-modal a{font-size:-3;color:#555;cursor:pointer}
       .inverse {
         
-        --mdc-theme-primary: #8888;
+        no--mdc-theme-primary: #8888;
         
       }
       :host > near-modal > div {
         background-color:white;
         color:black;
-        border:solid 1px #ccc;
-        box-shawow: 2px 2px 2px #888;
+        border:solid 4px #ccc;
+        border-radius:12px;
+        box-shawow: 4px 4px 4px #888;
         display:flex; 
         flex-direction:column;
-        align-items: flex-end;
+        no-align-items: flex-end;
         justify-content:center;
         padding:4em;
-        --mdc-theme-primary: #057; ;
+        no-mdc-theme-primary: #057; ;
       }
       input, textarea {
-        border: none;
+        border: solid 1px;
         border-bottom: solid 1px rgba(128,128,128,0.2);
+        border-radius: 4px;
         padding:1em 0.5em ; 
         margin-top:.2em;
-        color:#888;
+        color:#444;
         nwidth:100%;
         background-color:rgba(128,128,128, 0);
       }
+      a[dense]{
+        display:block;
+        text-align:center;
+        margin-top:.5em;
+        padding:.5em;
+        color:#057;
+        width:100%;
+      }
       near-modal mwc-formfield {
+        flex-direction:column;
+      }
+      label{
+        display:flex;
         flex-direction:column;
       }
       #name_button {
@@ -148,7 +162,8 @@ export class NearUser extends LitElement {
       #name_button img {
           max-width:56px;     
           clip-path: circle(46% at center);
-        }  
+        }
+       mwc-button { margin-top:1em; margin-bottom:1em; }    
       `;
     }
 
@@ -360,15 +375,15 @@ export class NearUser extends LitElement {
     return html`
     <near-modal>
      <div>
-     <mwc-formfield label="Email" alignEnd>
+     <label>Email
        <input name="email" id="email" 
          type="email" .value="${this.email}" @change="${this.changeEmail}">
-     </mwc-formfield>
-     <mwc-formfield label="Password" alignEnd>
+     </label>
+     <label>Password
        <input name="psw" id="psw" 
          type="password" value="" @change="${this.changePsw}">
-     </mwc-formfield>    
-     <mwc-button @click="${this.authenticate}"  >${i18n`authenticate`}</mwc-button>
+     </label>    
+     <mwc-button outlined @click="${this.authenticate}"  >${i18n`authenticate`}</mwc-button>
      <div id="message">${this.message}</div> 
      ${ this.noregister? '' : 
      html`<a dense @click="${()=>{this.state=status.SIGNUP  ;console.log('register')}}" >${i18n("register...")}</a>`}
@@ -407,25 +422,25 @@ export class NearUser extends LitElement {
     <near-modal>
     <div>
      
-     <mwc-formfield label="Email" alignEnd>
+     <label>Email
        <input name="email" id="email" 
          type="email" .value="${this.email}" @change="${this.changeEmail}">
-     </mwc-formfield>
-     <mwc-formfield label="${i18n`Name`}" alignEnd>
+     </label>
+     <label>${i18n`Name`}
        <input nclass="mdc-text-field__input" name="name" id="name" 
          type="text" .value="${this.name}" @change="${this.changeName}">
-     </mwc-formfield>
-     <mwc-formfield label="${i18n`New password`}" alignEnd>
+     </label>
+     <label>${i18n`New password`}
        <input name="newpsw" id="newpsw" 
          type="password"  @keyup="${this.changeNewPsw}"  @change="${this.changeNewPsw}">
-     </mwc-formfield>     
-     <mwc-formfield label="${i18n`retype password`}" alignEnd>
+     </label>     
+     <label>${i18n`retype password`}
        <input name="newpsw2" id="newpsw2" 
          type="password"  @keyup="${this.changeNewPsw}"  @change="${this.changeNewPsw}">    
-     </mwc-formfield> 
+     </label> 
           
      <div id="message">${this.message}</div>      
-     <mwc-button id="proceed" @click="${this.signUp}"  >${i18n`Register!`}</mwc-button>
+     <mwc-button outlined id="proceed" @click="${this.signUp}"  >${i18n`Register!`}</mwc-button>
      <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
     </div>
     </near-modal>
@@ -438,14 +453,14 @@ export class NearUser extends LitElement {
     <near-modal>
     <div>
      <p>${i18n`Your confirmation code:`}</p>
-     <mwc-formfield label="Email" alignEnd>
+     <label>Email
        <input name="email" id="email" 
          type="email" .value="${this.email}" @change="${this.changeEmail}">
-     </mwc-formfield>
-     <mwc-formfield label="${i18n`Code`}" alignEnd>
+     </label>
+     <label>${i18n`Code`}
        <input name="code" id="code" 
          type="number">
-     </mwc-formfield>
+     </label>
      <div id="message">${this.message}</div>  
      <mwc-button @click="${this.confirm}"  >${i18n`Go!`}</mwc-button>
      <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
@@ -460,10 +475,10 @@ export class NearUser extends LitElement {
     <near-modal>
     <div>
      <p>${i18n`Your code:`}</p>
-     <mwc-formfield label="${i18n`Code`}" alignEnd>
+     <label>${i18n`Code`}
        <input name="code" id="code" 
          type="number">
-     </mwc-formfield>
+     </label>
      <div id="message">${this.message}</div>  
      <mwc-button @click="${this.mfaCode}"  >${i18n`Go!`}</mwc-button>
      <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
@@ -480,21 +495,21 @@ export class NearUser extends LitElement {
      <div>
      ${ this.state==status.CHANGEPSW?
         html`
-          <mwc-formfield label="${i18n`Old password`}" alignEnd>
+          <label>${i18n`Old password`}
             <input name="psw" id="psw" 
               type="password" .value="" @change="${this.changePsw}">
-          </mwc-formfield>
+          </label>
         ` 
         :``
      }
-     <mwc-formfield label="${i18n`New password`}" alignEnd>
+     <label>${i18n`New password`}
      <input name="newpsw" id="newpsw" 
          type="password" .value="" @keyup="${this.changeNewPsw}"  @change="${this.changeNewPsw}">
-     </mwc-formfield>
-     <mwc-formfield label="${i18n`Retype new password`}" alignEnd>
+     </label>
+     <label>${i18n`Retype new password`}
        <input name="newpsw2" id="newpsw2" 
          type="password" .value="" @keyup="${this.changeNewPsw}"  @change="${this.changeNewPsw}">
-     </mwc-formfield> 
+     </label> 
      <div id="message">${this.message}</div>       
      <mwc-button id="proceed"  @click="${this.changePassword}"  >${i18n`Change password!`}</mwc-button>
      <a dense @click="${()=>this.state=status.LOGGED}">${i18n`cancel`}</a>
@@ -507,10 +522,10 @@ export class NearUser extends LitElement {
     <near-modal>
     <div>
      
-     <mwc-formfield label="Email" alignEnd>
+     <label>Email
        <input name="email" id="email" 
          type="email" .value="${this.email}" @change="${this.changeEmail}">
-     </mwc-formfield>
+     </label>
      <div id="message">${this.message}</div>      
      <mwc-button id="proceed" @click="${this.forgotPassword}">${i18n`continue`}</mwc-button>
      <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
@@ -524,18 +539,18 @@ export class NearUser extends LitElement {
     return html`
     <near-modal>
      <div>
-     <mwc-formfield label="${i18n`Verification code`}" alignEnd>
+     <label>${i18n`Verification code`}
        <input name="vcode" id="vcode" 
          type="text" value="${this.hasOwnProperty('vcode')? this.vcode : ''}">
-     </mwc-formfield>
-     <mwc-formfield label="${i18n`New password`}" alignEnd>
+     </label>
+     <label>${i18n`New password`}
        <input name="newpsw" id="newpsw" 
          type="password" .value="" @keyup="${this.changeNewPsw}"  @change="${this.changeNewPsw}">
-     </mwc-formfield>
-     <mwc-formfield label="${i18n`Retype new password`}" alignEnd>
+     </label>
+     <label>${i18n`Retype new password`}
        <input name="newpsw2" id="newpsw2" 
          type="password" .value="" @keyup="${this.changeNewPsw}"  @change="${this.changeNewPsw}">
-     </mwc-formfield> 
+     </label> 
      <div id="message">${this.message}</div>       
      <mwc-button id="proceed"  @click="${this.confirmForgotPassword}"  >${i18n`Change password!`}</mwc-button>
      <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
@@ -553,25 +568,25 @@ export class NearUser extends LitElement {
           @picture-change="${this.uploadPicture}"
           src="${this.picture}"></user-picture> 
      
-     <mwc-formfield label="Email" alignEnd>
+     <label>Email
        <input disabled name="email" id="email" 
          type="email" .value="${this.email}">
-     </mwc-formfield>
-     <mwc-formfield label="${i18n`Name`}" alignEnd>
+     </label>
+     <label>${i18n`Name`}
        <input nclass="mdc-text-field__input" name="name" id="name" 
          type="text" .value="${this.name}" nchange="${this.changeName}">
-     </mwc-formfield>
-     <mwc-formfield label="${i18n`Nickname`}" alignEnd>
+     </label>
+     <label>${i18n`Nickname`}
        <input nclass="mdc-text-field__input" name="nickname" id="nickname" 
          type="text" .value="${this.nickname}" nchange="${(e)=>this.nickname=e.target.value}">
-     </mwc-formfield>
-     <mwc-formfield label="${i18n`Website`}" alignEnd>
+     </label>
+     <label>${i18n`Website`}
        <input nclass="mdc-text-field__input" name="website" id="website" 
          type="text" .value="${this.website}" nchange="${(e)=>this.website=e.target.value}">
-     </mwc-formfield>
-     <mwc-formfield label="${i18n`Extra`}" alignEnd>
+     </label>
+     <label>${i18n`Extra`}
        <textarea  name="extra" id="extra">${JSON.stringify(this.extra,null,2)}</textarea>  
-     </mwc-formfield>        
+     </label>        
           
      <div id="message">${this.message}</div>
            
