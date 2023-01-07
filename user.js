@@ -60,14 +60,15 @@ i18n.db = {
     "authenticate": "ingresar",
     "login with your new password": "ingrese con la nueva password",
     "change password required": "se requiere cambio de password",
-    "register...": "registrarse...",
-    "forgot password...": "olvidé mi password...",
-    "confirm...": "confirmar...",
+    "register": "registrarse",
+    "forgot password": "olvidé mi password",
+    "confirm": "confirmar",
     "Name": "Nombre",
     "New password": "Nueva password",
     "retype password": "Retipear password",
     "Register!": "Registrarme!",
     "Your confirmation code": "Código de confirmación",
+    "I have a confirmation code" : "Tengo un código de confirmación",
     "Code": "Código",
     "Go!": "OK",
     "Your code:": "Su código",
@@ -151,19 +152,29 @@ export class NearUser extends LitElement {
         display:flex;
         flex-direction:column;
       }
+      #login_button {
+        --mdc-theme-primary: var(--mdc-theme-on-primary, #888);
+      }
       #name_button {
-        padding:0; 
-        height: 56px; width:56px;     
-        font-size:20px;
-        border:none;
-        background-color:#ffffff80;
-        overflow:hidden;
-        clip-path: circle(50% at center);}
-      #name_button img {
-          max-width:56px;     
-          clip-path: circle(46% at center);
+        padding: 0;
+        display: flex;
+        height: 60px;
+        width: 60px;
+        font-size: 20px;
+        border: none;
+        background-color: rgba(255, 255, 255, 0.5);
+        /* overflow: hidden; */
+        clip-path: circle(50% at 50% 50%);
+        align-items: center;
+        justify-content: center;
+      }
+        #name_button img {
+          fit:cover;
+          max-width:62px;     
+          clip-path: circle(50% at center);
         }
-       mwc-button { margin-top:1em; margin-bottom:1em; }    
+       mwc-button { margin-top:1em; margin-bottom:1em; } 
+       #message { color:red; font-size:small; margin-top:1em; text-align:center;}   
       `;
     }
 
@@ -386,10 +397,10 @@ export class NearUser extends LitElement {
      <mwc-button outlined @click="${this.authenticate}"  >${i18n`authenticate`}</mwc-button>
      <div id="message">${this.message}</div> 
      ${ this.noregister? '' : 
-     html`<a dense @click="${()=>{this.state=status.SIGNUP  ;console.log('register')}}" >${i18n("register...")}</a>`}
-     <a dense @click="${()=>{this.state=status.FORGOT }}" >${i18n("forgot password...")}</a>
-     <a dense @click="${()=>{this.state=status.CONFIRM }}" >${i18n("confirm...")}</a>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
+     html`<a dense @click="${()=>{this.state=status.SIGNUP  ;console.log('register')}}" >${i18n("register")}</a>`}
+     <a dense @click="${()=>{this.state=status.FORGOT }}" >${i18n("forgot password")}</a>
+     <a dense @click="${()=>{this.state=status.CONFIRM }}" >${i18n("I have a confirmation code")}</a>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
      </div>
     </near-modal>`
   }
@@ -441,7 +452,7 @@ export class NearUser extends LitElement {
           
      <div id="message">${this.message}</div>      
      <mwc-button outlined id="proceed" @click="${this.signUp}"  >${i18n`Register!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
     </div>
     </near-modal>
    `; 
@@ -463,7 +474,7 @@ export class NearUser extends LitElement {
      </label>
      <div id="message">${this.message}</div>  
      <mwc-button @click="${this.confirm}"  >${i18n`Go!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
      
      </div>
      </near-modal>
@@ -481,7 +492,7 @@ export class NearUser extends LitElement {
      </label>
      <div id="message">${this.message}</div>  
      <mwc-button @click="${this.mfaCode}"  >${i18n`Go!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
      
      </div>
      </near-modal>
@@ -512,7 +523,7 @@ export class NearUser extends LitElement {
      </label> 
      <div id="message">${this.message}</div>       
      <mwc-button id="proceed"  @click="${this.changePassword}"  >${i18n`Change password!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.LOGGED}">${i18n`cancel`}</a>
+     <a dense @click="${()=>this.state=status.LOGGED}"><mwc-icon>cancel</mwc-icon></a>
      </div>
     </near-modal>`
   }
@@ -528,7 +539,7 @@ export class NearUser extends LitElement {
      </label>
      <div id="message">${this.message}</div>      
      <mwc-button id="proceed" @click="${this.forgotPassword}">${i18n`continue`}</mwc-button>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
     </div>
     </near-modal>
    `; 
@@ -553,7 +564,7 @@ export class NearUser extends LitElement {
      </label> 
      <div id="message">${this.message}</div>       
      <mwc-button id="proceed"  @click="${this.confirmForgotPassword}"  >${i18n`Change password!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}">${i18n`cancel`}</a>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
      </div>
     </near-modal>`
   }
@@ -591,7 +602,7 @@ export class NearUser extends LitElement {
      <div id="message">${this.message}</div>
            
      <mwc-button id="proceed" @click="${this.updateAttributes}">${i18n`Update!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.LOGGED}">${i18n`cancel`}</a>
+     <a dense @click="${()=>this.state=status.LOGGED}"><mwc-icon>cancel</mwc-icon></a>
     </div>
     </near-modal>
    `; 
@@ -673,7 +684,7 @@ export class NearUser extends LitElement {
     };
     if (this.state== status.ANONIMOUS) {
       let label= this.signInLabel || i18n('Sign in');
-      return html`<mwc-button class="inverse" dense @click="${()=>{this.state=status.SIGNIN}}" label="${label}" icon="person" trailingicon></mwc-button>
+      return html`<mwc-button id="login_button" dense @click="${()=>{this.state=status.SIGNIN}}" label="${label}" icon="person" trailingicon></mwc-button>
       `;
     }
     else if(this.state == status.FORCED_CHANGEPSW) 

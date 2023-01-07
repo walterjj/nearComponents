@@ -16,12 +16,15 @@ export class UserPicture extends LitElement {
                     :host > div { border: none;min-height:100px}
                     img{ width:200px ;
                          display:block;
-                         clip-path: circle(45% at center);}
+                         clip-path: circle(50% at center);}
                         
 
                     .dropper {
                         width:200px; 
                         height:200px;
+                        display:flex;
+                        justify-content:center;
+                        align-items:center;
                         background-color:#8883;
                         nopacity: .3;
                         nborder: solid 1px;
