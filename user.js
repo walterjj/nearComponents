@@ -19,6 +19,9 @@ let  CookieStorage=null;
 import {Formfield} from '@material/mwc-formfield'
 import {Button} from '@material/mwc-button'
 import {Icon} from '@material/mwc-icon'
+import { Menu } from '@material/mwc-menu';
+import '@material/mwc-list';
+
 
 import {NearMenu} from './menu.js'
 import {UserPicture} from './user_picture.js'
@@ -68,7 +71,7 @@ i18n.db = {
     "retype password": "Retipear password",
     "Register!": "Registrarme!",
     "Your confirmation code": "Código de confirmación",
-    "I have a confirmation code" : "Tengo un código de confirmación",
+    "I have a confirmation code" : "tengo un código de confirmación",
     "Code": "Código",
     "Go!": "OK",
     "Your code:": "Su código",
@@ -83,11 +86,11 @@ i18n.db = {
     "cancel": "cancelar",
     "close": "cerrar",
     "go": "OK",
-    "edit profile...": "modificar perfil...",
-    "change picture...": "cambiar foto...",
-    "change password...": "cambiar password...",
+    "edit profile": "modificar perfil",
+    "change picture": "cambiar foto",
+    "change password": "cambiar password",
     "logout": "salir",
-    "My account...": "Mi cuenta...",
+    "my account": "mi cuenta",
     "Edit Profile": "Modificar perfil",
     "Sign in": "Ingresar",
     "Verified! please use your email and password to signin": "Verificado! use su email y password para ingresar",
@@ -115,17 +118,19 @@ export class NearUser extends LitElement {
         
       }
       :host > near-modal > div {
-        background-color:white;
+        background-color:#ffe;
         color:black;
-        border:solid 4px #ccc;
-        border-radius:12px;
-        box-shawow: 4px 4px 4px #888;
+        border:solid 2px #bbb;
+        border-radius:6px;
+        box-shawow: 0px 0px 8px --var(--mdc-theme-on-primary, #888);
         display:flex; 
         flex-direction:column;
         no-align-items: flex-end;
         justify-content:center;
-        padding:4em;
-        no-mdc-theme-primary: #057; ;
+        padding:3em;
+        no-mdc-theme-primary: #057;
+        width:400px;
+        max-width:100vw;
       }
       input, textarea {
         border: solid 1px;
@@ -152,6 +157,7 @@ export class NearUser extends LitElement {
         display:flex;
         flex-direction:column;
       }
+
       #login_button {
         --mdc-theme-primary: var(--mdc-theme-on-primary, #888);
       }
@@ -169,12 +175,19 @@ export class NearUser extends LitElement {
         justify-content: center;
       }
         #name_button img {
-          fit:cover;
+          object-fit:cover;
           max-width:62px;     
           clip-path: circle(50% at center);
         }
        mwc-button { margin-top:1em; margin-bottom:1em; } 
-       #message { color:red; font-size:small; margin-top:1em; text-align:center;}   
+       #message { color:red; font-size:small; margin-top:1em; text-align:center;}
+       #links{
+          margin-top:3em;
+       }
+       mwc-menu{
+        position:relative; 
+        right:0;
+        left: -100px;}   
       `;
     }
 
@@ -396,11 +409,13 @@ export class NearUser extends LitElement {
      </label>    
      <mwc-button outlined @click="${this.authenticate}"  >${i18n`authenticate`}</mwc-button>
      <div id="message">${this.message}</div> 
+     <div id="links">
      ${ this.noregister? '' : 
      html`<a dense @click="${()=>{this.state=status.SIGNUP  ;console.log('register')}}" >${i18n("register")}</a>`}
      <a dense @click="${()=>{this.state=status.FORGOT }}" >${i18n("forgot password")}</a>
      <a dense @click="${()=>{this.state=status.CONFIRM }}" >${i18n("I have a confirmation code")}</a>
      <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
+     </div>
      </div>
     </near-modal>`
   }
@@ -463,7 +478,7 @@ export class NearUser extends LitElement {
     return html`
     <near-modal>
     <div>
-     <p>${i18n`Your confirmation code:`}</p>
+     <p>${i18n`Your confirmation code`}:</p>
      <label>Email
        <input name="email" id="email" 
          type="email" .value="${this.email}" @change="${this.changeEmail}">
@@ -635,7 +650,8 @@ export class NearUser extends LitElement {
   openMenu(){
     //this.shadowRoot.getElementById('menu').setAttribute('open',true);
     //console.log("openMenu");
-    this.shadowRoot.getElementById('menu').toggleMenu();
+    //this.shadowRoot.getElementById('menu').toggleMenu();
+    this.shadowRoot.getElementById('menu').open=true;
   }
 
   /**
@@ -662,22 +678,15 @@ export class NearUser extends LitElement {
                 html`<img src="${this.picture}">`
                 : this.nameInitials()}
               </button> 
-              <near-menu id="menu">
-                    <near-list>
-                        <near-list-item label="go" @click="${this.doAction}" ></near-list-item>
-                        <near-list-item label="${i18n`edit profile...`}" @click="${()=>this.state=status.EDIT_PROFILE}"></near-list-item>
-                        <near-list-item label="${i18n`change picture...`}" @click="${()=>this.state=status.EDIT_PICTURE}"></near-list-item>
-                        <near-list-item label="${i18n`change password...`}" @click="${()=>this.state=status.CHANGEPSW}"></near-list-item>
-                        <near-list-item label="${i18n`logout`}" @click="${this.logout}"></near-list-item>
+              <mwc-menu menu-corner="END" corner="TOP_RIGHT" id="menu">
+                        <mwc-list-item label="go" @click="${this.doAction}" ></mwc-list-item>
+                        <mwc-list-item label="${i18n`edit profile`}" @click="${()=>this.state=status.EDIT_PROFILE}">${i18n`edit profile`}</mwc-list-item>
+                        <mwc-list-item label="${i18n`change picture`}" @click="${()=>this.state=status.EDIT_PICTURE}">${i18n`change picture`}</mwc-list-item>
+                        <mwc-list-item label="${i18n`change password`}" @click="${()=>this.state=status.CHANGEPSW}">${i18n`change password`}</mwc-list-item>
+                        <mwc-list-item label="${i18n`logout`}" @click="${this.logout}">${i18n`logout`}</mwc-list-item>
                         
-                        <near-list-item label="${i18n`My account...`}">
-                          <near-list>
-                            <near-list-item label="${i18n`edit profile`}" @click="${()=>this.state=status.EDIT_PROFILE}"></near-list-item>
-                            <near-list-item label="${i18n`change password...`}" @click="${()=>this.state=status.CHANGEPSW}"></near-list-item>
-                          </near-list>  
-                        </near-list-item>
-                    </near-list>
-              </near-menu> 
+                        <mwc-list-item label="${i18n`edit profile`}" @click="${()=>this.state=status.EDIT_PROFILE}">${i18n`edit profile`}</mwc-list-item>
+              </mwc-menu> 
               
               </div>
               `
