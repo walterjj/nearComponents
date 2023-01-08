@@ -684,8 +684,6 @@ export class NearUser extends LitElement {
                         <mwc-list-item label="${i18n`change picture`}" @click="${()=>this.state=status.EDIT_PICTURE}">${i18n`change picture`}</mwc-list-item>
                         <mwc-list-item label="${i18n`change password`}" @click="${()=>this.state=status.CHANGEPSW}">${i18n`change password`}</mwc-list-item>
                         <mwc-list-item label="${i18n`logout`}" @click="${this.logout}">${i18n`logout`}</mwc-list-item>
-                        
-                        <mwc-list-item label="${i18n`edit profile`}" @click="${()=>this.state=status.EDIT_PROFILE}">${i18n`edit profile`}</mwc-list-item>
               </mwc-menu> 
               
               </div>
