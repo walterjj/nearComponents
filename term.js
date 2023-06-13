@@ -1,7 +1,7 @@
 'use strict';
 import { LitElement, html, css } from 'lit-element';
 
-import * as xterm from 'xterm/lib/xterm_es6.js';
+import * as xterm from './xterm_es6.js';
 console.log("Terminal",xterm);
 let Terminal=xterm.default.Terminal;
 
