@@ -16,6 +16,10 @@ export class DrawerButton extends LitElement {
                                 width:100%;
                                 color:inherit;
                         }
+                        :host([disabled]) a{
+                                pointer-events:none;
+                                opacity:0.5;
+                        }
                         :host(:hover){
                                 background-color:#489DD0;
                                 color:white;
@@ -25,19 +29,29 @@ export class DrawerButton extends LitElement {
                         }
                 `;
         }
+
         render() {
+                if(this.href.startsWith("#")) 
                 return html`
-                <a is="near-route" href="${this.href}">
-                        <mwc-icon>${this.icon || "arrow_right"}</mwc-icon>        
-                        <span><slot></slot></span>
-                 </a>
-                `
+                        <a href="${this.href}">
+                                <mwc-icon>${this.icon || "arrow_right"}</mwc-icon>        
+                                <span><slot></slot></span>
+                        </a>
+                        `
+                else        
+                return html`
+                        <a is="near-route" href="${this.href}">
+                                <mwc-icon>${this.icon || "arrow_right"}</mwc-icon>        
+                                <span><slot></slot></span>
+                        </a>
+                        `
         }
 
         static get properties() {
                 return {
                         icon: String,
                         href: String,
+                        disabled: Boolean
                 };
         }
 }
