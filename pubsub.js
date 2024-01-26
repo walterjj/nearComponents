@@ -2,14 +2,14 @@
 
 import {LitElement, html, css} from "lit-element";
 import {NearUser} from "./user";
-//import * as MQTT from './mqtt.min.js';
-import * as MQTT from 'mqtt/dist/mqtt.min.js';
-
+//import * as MQTT from './mqtt.min';
+import * as MQTT from 'mqtt/dist/mqtt.min';
+//import * as MQTT from 'mqtt/dist/mqtt';
 
 let isLoaded=false;
 async function initMqtt() {
         if(!isLoaded)
-        {        await import('./mqtt.min.js');
+        {        await import('./mqtt.min');
                  console.log("mqtt loaded", JSON.stringify(mqtt));
         }
        isLoaded=true;         
@@ -55,12 +55,18 @@ export class NearMqtt extends LitElement {
         }
 
         subscribe(topic, f){
-                this.client.subscribe(topic, function (err) {
-                        if (!err) {
-				console.log("suscribed OK to ",topic);
-                	}
-                        else console.log("suscribe error to ",topic,err);
-                      })
+                return new Promise((resolve,reject)=>{
+                        this.client.subscribe(topic, function (err) {
+                                if (!err) {
+                                        console.log("suscribed OK to ",topic);
+                                        resolve();
+                                }
+                                else { 
+                                        console.log("suscribe error to ",topic,err);
+                                        reject(err);
+                                }
+                        })
+                });
         }
 
 
