@@ -1,9 +1,9 @@
 'use strict';
 import { LitElement, html, css } from 'lit-element';
 
-import {Terminal} from 'xterm';
+import {Terminal} from '@xterm/xterm';
 
-import sheet from 'xterm/css/xterm.css'  assert { type: 'css' };
+import sheet from '@xterm/xterm/css/xterm.css'  assert { type: 'css' };
 
 
 
