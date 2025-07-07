@@ -26,23 +26,28 @@ export class NearLocation {
 
         }
 
+        hashChanged(){
+                return(this.hash != window.decodeURIComponent(window.location.hash.substring(1)));
+        }
+
         onChange(){
                 let changed=this.changed();
-                //this.onHashChange();
-                this.hash = window.decodeURIComponent(window.location.hash.substring(1));
+                
+                //this.hash = window.decodeURIComponent(window.location.hash.substring(1));
                 if(changed) {
                         this.path = window.decodeURIComponent(window.location.pathname);
                         console.log("onChange",this.path)
                         this.query = window.location.search.substring(1);
                         if(this.listener) this.listener(this); 
                 }
+                else this.onHashChange();
         }
 
 
         onHashChange(){
                 this.hash = window.decodeURIComponent(window.location.hash.substring(1));
                 console.log("hash:",this.hash);
-                if(this.hashListener) this.hashListener(this);
+                if(this.hashChanged && this.hashListener) this.hashListener(this);
         }
  
 
