@@ -2,11 +2,20 @@
 import { LitElement, html, css } from 'lit-element';
 
 import {Terminal} from '@xterm/xterm';
+import xtermCssText from './xterm.css.js';
 
-import sheet from '@xterm/xterm/css/xterm.css'  assert { type: 'css' };
+function applyXtermStyles(shadowRoot) {
+  if ('adoptedStyleSheets' in shadowRoot && 'replaceSync' in CSSStyleSheet.prototype) {
+    const styleSheet = new CSSStyleSheet();
+    styleSheet.replaceSync(xtermCssText);
+    shadowRoot.adoptedStyleSheets = [...shadowRoot.adoptedStyleSheets, styleSheet];
+    return;
+  }
 
-
-
+  const style = document.createElement('style');
+  style.textContent = xtermCssText;
+  shadowRoot.appendChild(style);
+}
 
 export class NearTerm extends LitElement {
   static get styles() {
@@ -38,17 +47,11 @@ export class NearTerm extends LitElement {
 
   firstUpdated() {
     try {
-      this.shadowRoot.adoptedStyleSheets.push(sheet); 
-      console.log("adoptedStyleSheets works",sheet);
+      applyXtermStyles(this.shadowRoot);
+    } catch (e) {
+      console.error('Unable to initialize xterm styles', e);
     }
-    catch(e){
-      console.log("adoptedStyleSheets didn't work",sheet);
-      const styleSheet = new CSSStyleSheet();
-      styleSheet.replace(sheet);
-      this.shadowRoot.adoptedStyleSheets.push(styleSheet);
-      console.log("adoptedStyleSheets replace works",styleSheet)
-    }
-       
+
     this.term = new Terminal();
     this.term.onData(data => {
       console.log("data",data);
