@@ -1,6 +1,7 @@
 'use strict';
 
 import { LitElement, html, css} from 'lit-element';
+import './near-icon.js';
 
 import {NearMqtt} from "./pubsub.js";
 
@@ -666,7 +667,25 @@ export class PeerConnectionMeet extends LitElement {
 			display:flex;
 			flex-direction:column;
 		}
-                `;
+		.call-fab{
+			display:inline-flex;
+			align-items:center;
+			justify-content:center;
+			width:3rem;
+			height:3rem;
+			margin:0.5rem;
+			border:none;
+			border-radius:999px;
+			background:#0b7;
+			color:#fff;
+			box-shadow:0 0.5rem 1rem -0.5rem rgb(0 0 0 / 0.45);
+			cursor:pointer;
+		}
+		.call-fab near-icon{
+			width:1.4rem;
+			height:1.4rem;
+		}
+	                `;
         }
 
 	static get properties() {
@@ -689,8 +708,8 @@ export class PeerConnectionMeet extends LitElement {
 		<div id="status"></div>
                 ${this.renderPeers()}
 		<div id="call_controls">
-		<mwc-fab id="call" mini icon="call" @click="${this.connect}"></mwc-fab>
-		<mwc-fab id="call_end" mini icon="call_end" @click="${this.disconnect}"></mwc-fab>
+		<button type="button" class="call-fab" id="call" title="call" @click="${this.connect}"><near-icon name="call"></near-icon></button>
+		<button type="button" class="call-fab" id="call_end" title="hang up" @click="${this.disconnect}"><near-icon name="call_end"></near-icon></button>
 		</div>
                 <div id="controls" class="box">
                 </div>

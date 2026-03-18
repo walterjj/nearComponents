@@ -1,11 +1,12 @@
 import { LitElement, html, css } from 'lit-element';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 import {styles} from "./styles";
-import {Icon} from "@material/mwc-icon";
 import {NearUser} from "./user";
 import * as fa from "@fortawesome/fontawesome-free/js/fontawesome";
 import * as fab from "./faicons.js";
 import {NearResources} from "./resources";
+import './near-icon.js';
+import { nearPicoTokens, nearControlStyles } from './ui.css.js';
 
 function ekey(key){
         if(key.endsWith(".html")) return key.slice(0,-5); 
@@ -282,7 +283,7 @@ let nearBlockMixin={
 export class NearBlockControl extends LitElement{
 
         static get styles(){
-                return css`
+                return [nearPicoTokens, nearControlStyles, css`
                 :host{
                         background-color: #ffff;
                         color:#8c8;
@@ -312,13 +313,22 @@ export class NearBlockControl extends LitElement{
                         border-bottom:solid 1px #0808;
                         text-align:center;
                         box-shadow: 0 0 5px #0804;}
-                #adder > mwc-icon{ position:relative;top:-.6em; padding:3px;border:solid 1px #0808; border-radius:.6em; background-color:#fff; z-index:2000; }
+                #adder > .icon-action{ position:relative;top:-.6em; padding:3px;border:solid 1px #0808; border-radius:.6em; background-color:#fff; z-index:2000; }
                 #adder:hover {box-shadow: 0 0 3px #0804; color:#0804}        
-                mwc-icon {
-                        -mdc-icon-size:20px;
+                .icon-action {
+                        min-height:auto;
+                        padding:0.25rem;
+                        border:none;
+                        background:transparent;
+                        box-shadow:none;
+                        color:inherit;
                         cursor:pointer;
                 }
-                ` 
+                .icon-action near-icon {
+                        width:1.1rem;
+                        height:1.1rem;
+                }
+                `] 
         }
 
 
@@ -356,14 +366,15 @@ export class NearBlockControl extends LitElement{
         render(){
                 return html`
                 <div id="control">
-                <mwc-icon @click="${this.handleEdit}}">edit</mwc-icon>
-                <mwc-icon @click="${this.handleDuplicate}">content_copy</mwc-icon>
-                <mwc-icon @click="${this.handleDelete}">delete</mwc-icon>
+                <button type="button" class="icon-action" @click="${this.handleEdit}" aria-label="edit"><near-icon name="edit"></near-icon></button>
+                <button type="button" class="icon-action" @click="${this.handleDuplicate}" aria-label="duplicate"><near-icon name="content_copy"></near-icon></button>
+                <button type="button" class="icon-action" @click="${this.handleDelete}" aria-label="delete"><near-icon name="delete"></near-icon></button>
                 </div>
                 <div id="adder">
-                <mwc-icon @click="${this.handleAdd}">add
+                <button type="button" class="icon-action" @click="${this.handleAdd}" aria-label="add">
+                <near-icon name="add"></near-icon>
                 ${this.adding? html`<near-block-library></near-block-library>`:'' }
-                </mwc-icon>
+                </button>
                 </div>
 
                 
@@ -434,8 +445,8 @@ export class NearBlock extends LitElement {
                 <div>
                 ${this.editFields()}
                 <form-actions>
-                <mwc-button @click="${this.cancel}" >${i18n("cancel")}</mwc-button>
-                <mwc-button @click="${this.save}" >OK</mwc-button>
+                <button type="button" @click="${this.cancel}" >${i18n("cancel")}</button>
+                <button type="button" data-variant="primary" @click="${this.save}" >OK</button>
                 </form-actions>
                 </div>
                 </near-modal>`  
@@ -532,7 +543,7 @@ export class NearBlock extends LitElement {
                 return html`                      
                         <slot></slot>
                         ${NearUser.canEdit()?
-                                html`<mwc-icon id="edit-control" title="edit" @click="${this.startEdit}" >edit</mwc-icon>`:``} `
+                                html`<button type="button" class="near-icon-button" id="edit-control" title="edit" @click="${this.startEdit}" ><near-icon name="edit"></near-icon></button>`:``} `
         }
 
 
@@ -626,7 +637,7 @@ export class NearHeader extends NearBlock {
                 </label>
                 <label>
                 ${i18n`Image`}
-                <mwc-button @click="${this.resources}">Select...</mwc-button>
+                <button type="button" @click="${this.resources}">Select...</button>
                 ${this.o.image?
                         html`<img @click="${this.resources}" src="${this.o.image}">`:''}
                 </label>

@@ -1,11 +1,10 @@
 import { LitElement, html, css} from 'lit-element';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 import {render} from 'lit-html';
-import {Icon} from "@material/mwc-icon"
-//import {IconButton} from "@material/mwc-icon-button";
 import {NearResources} from "./resources";
 import {NearUser} from "./user";
-import { Button } from '@material/mwc-button';
+import './near-icon.js';
+import { nearPicoTokens, nearControlStyles } from './ui.css.js';
 //import {getMediumDragging, getNearToolbar,nearToolbarControls} from "./medium";
 //import {Figure} from "./figure";
 import {NearContent} from "./content";
@@ -16,7 +15,7 @@ class SectionControl extends LitElement {
     
     static get styles() {
                 
-        return css`
+        return [nearPicoTokens, nearControlStyles, css`
                 :host {
                         min-height:10px;
                         nwidth:100%;
@@ -40,9 +39,25 @@ class SectionControl extends LitElement {
                     flex-basis: 100%;   
 
                 }
-                :host mwc-icon, :host span{ color:#888; padding:2px 8px; cursor:pointer}
-                :host mwc-icon{font-size:16px}
-                :host mwc-icon[plus] {
+                a {
+                    color: inherit;
+                }
+                .icon-action,
+                .toolbar-label {
+                    min-height: auto;
+                    padding: 2px 8px;
+                    border: none;
+                    border-radius: 0.5rem;
+                    background: transparent;
+                    box-shadow: none;
+                    color: #888;
+                    cursor: pointer;
+                }
+                .icon-action near-icon {
+                    width: 1rem;
+                    height: 1rem;
+                }
+                .icon-action[plus] {
                     position:absolute;right:-30px; top:-30px;
                     font-size:24px;
                     display:inline-block;
@@ -52,11 +67,11 @@ class SectionControl extends LitElement {
                     box-shadow:1px 1px 2px #000;
                     padding:2px;
                 }
-                :host mwc-icon[disabled]{
+                .icon-action[disabled]{
                     color:#0004;
                     cursor:none;
                 }
-                :host span{font-size:12px}
+                .toolbar-label{font-size:12px}
                 .dropper{min-width:200px; min-height:200px;margin:auto; 
                     flex-basis:100%; background-color:#8888; 
                     display:flex; flex-direction:column;}
@@ -65,11 +80,11 @@ class SectionControl extends LitElement {
                 .form textarea{box-sizing:border-box;width:100%;padding:1em;height:100px; color:#000}
                 .form button{border:none; color:#000}
                 .form button[disabled]{border:none; color:#ccc}
-                .form mwc-icon{ font-size:24px; color:#000; }
+                .form .icon-action near-icon{ width:1.5rem; height:1.5rem; }
                 .form #msg{color:red}
-                .form .submit {display:block;text-align:right};
+                .form .submit {display:block;text-align:right}
             
-        `;
+        `];
     
     }
     constructor(nearEditor) {
@@ -263,7 +278,7 @@ class SectionControl extends LitElement {
         console.log("typeButtons:" ,this.nearEditor.types)
         Object.keys(this.nearEditor.types).forEach(t=>{
             console.log(t)
-        r.push(html`<mwc-button @click="${(e)=>this.setContent(t)}" >${t}</mwc-button>`)
+        r.push(html`<button type="button" class="type-button" @click="${() => this.setContent(t)}">${t}</button>`)
         })
         return r;
     }
@@ -282,7 +297,6 @@ class SectionsStart extends SectionControl {
     }
 
     render(){
-        //return html`<mwc-icon>save</mwc-icon>`
         return html``
     }
 
@@ -298,8 +312,14 @@ class SectionsEnd extends SectionControl {
     }
 
     render(){
-        return html`<a href="#" tabindex="0" @click="${this.addSection}"><mwc-icon plus>add</mwc-icon></a>
-                    <a href="#" tabindex="0" @click="${this.addContent}"><mwc-icon>post_add</mwc-icon></a>`
+        return html`
+            <button type="button" class="icon-action" plus @click="${this.addSection}" aria-label="add section">
+                <near-icon name="add"></near-icon>
+            </button>
+            <button type="button" class="icon-action" @click="${this.addContent}" aria-label="add content">
+                <near-icon name="post_add"></near-icon>
+            </button>
+        `
     }
 
 }
@@ -331,37 +351,37 @@ class SectionControlImpl extends SectionControl {
     editControls() {
         return html`
             
-            <mwc-icon title="bold" @mousedown="${(e)=>this.exec('bold',e)}">format_bold</mwc-icon>
-            <mwc-icon title="italic" @mousedown="${(e)=>this.exec('italic',e)}">format_italic</mwc-icon>
-            <mwc-icon title="underline" @mousedown="${(e)=>this.exec('underline',e)}">format_underline</mwc-icon>
-            <mwc-icon title="link" @mousedown="${(e)=>this.exec('createLink',e,window.prompt("url?","https://"))}">link</mwc-icon>
+            <button type="button" class="icon-action" title="bold" @mousedown="${(e)=>this.exec('bold',e)}"><near-icon name="format_bold"></near-icon></button>
+            <button type="button" class="icon-action" title="italic" @mousedown="${(e)=>this.exec('italic',e)}"><near-icon name="format_italic"></near-icon></button>
+            <button type="button" class="icon-action" title="underline" @mousedown="${(e)=>this.exec('underline',e)}"><near-icon name="format_underline"></near-icon></button>
+            <button type="button" class="icon-action" title="link" @mousedown="${(e)=>this.exec('createLink',e,window.prompt("url?","https://"))}"><near-icon name="link"></near-icon></button>
 
-            <span title="header 1" @mousedown="${(e)=>this.exec('formatBlock',e,'h1')}">H1</span>
-            <span title="header 2" @mousedown="${(e)=>this.exec('formatBlock',e,'h2')}">H2</span>
-            <span title="header 3" @mousedown="${(e)=>this.exec('formatBlock',e,'h3')}">H3</span>
+            <button type="button" class="toolbar-label" title="header 1" @mousedown="${(e)=>this.exec('formatBlock',e,'h1')}">H1</button>
+            <button type="button" class="toolbar-label" title="header 2" @mousedown="${(e)=>this.exec('formatBlock',e,'h2')}">H2</button>
+            <button type="button" class="toolbar-label" title="header 3" @mousedown="${(e)=>this.exec('formatBlock',e,'h3')}">H3</button>
             
                 
-            <mwc-icon title="gallery" @mousedown="${this.insertImage}">image</mwc-icon>
-            <mwc-icon title="embed" @mousedown="${this.insertVideo}">video_library</mwc-icon>
-            <mwc-icon title="insert code" @mousedown="${this.insertCode}">web_asset</mwc-icon>
+            <button type="button" class="icon-action" title="gallery" @mousedown="${this.insertImage}"><near-icon name="image"></near-icon></button>
+            <button type="button" class="icon-action" title="embed" @mousedown="${this.insertVideo}"><near-icon name="video_library"></near-icon></button>
+            <button type="button" class="icon-action" title="insert code" @mousedown="${this.insertCode}"><near-icon name="web_asset"></near-icon></button>
 
-            <mwc-icon title="blockquote" @mousedown="${(e)=>this.exec('formatBlock',e,'blockquote')}">format_quote</mwc-icon>
-            <mwc-icon title="indent" @mousedown="${(e)=>this.exec('indent',e)}">format_indent_increase</mwc-icon>
-            <mwc-icon title="outdent" @mousedown="${(e)=>this.exec('outdent',e)}">format_indent_decrease</mwc-icon>
-            <mwc-icon title="align left" @mousedown="${(e)=>this.exec('justifyLeft',e)}">format_align_left</mwc-icon>
-            <mwc-icon title="align center" @mousedown="${(e)=>this.exec('justifyCenter',e)}">format_align_center</mwc-icon>
-            <mwc-icon title="align right" @mousedown="${(e)=>this.exec('justifyRight',e)}">format_align_right</mwc-icon>
-            <mwc-icon title="justify" @mousedown="${(e)=>this.exec('justifyFull',e)}">format_align_justify</mwc-icon>
-            <mwc-icon title="numbered list" @mousedown="${(e)=>this.exec('insertOrderedList',e)}">format_list_numbered</mwc-icon>
-            <mwc-icon title="bulleted list" @mousedown="${(e)=>this.exec('insertUnorderedList',e)}">format_list_bulleted</mwc-icon>
+            <button type="button" class="icon-action" title="blockquote" @mousedown="${(e)=>this.exec('formatBlock',e,'blockquote')}"><near-icon name="format_quote"></near-icon></button>
+            <button type="button" class="icon-action" title="indent" @mousedown="${(e)=>this.exec('indent',e)}"><near-icon name="format_indent_increase"></near-icon></button>
+            <button type="button" class="icon-action" title="outdent" @mousedown="${(e)=>this.exec('outdent',e)}"><near-icon name="format_indent_decrease"></near-icon></button>
+            <button type="button" class="icon-action" title="align left" @mousedown="${(e)=>this.exec('justifyLeft',e)}"><near-icon name="format_align_left"></near-icon></button>
+            <button type="button" class="icon-action" title="align center" @mousedown="${(e)=>this.exec('justifyCenter',e)}"><near-icon name="format_align_center"></near-icon></button>
+            <button type="button" class="icon-action" title="align right" @mousedown="${(e)=>this.exec('justifyRight',e)}"><near-icon name="format_align_right"></near-icon></button>
+            <button type="button" class="icon-action" title="justify" @mousedown="${(e)=>this.exec('justifyFull',e)}"><near-icon name="format_align_justify"></near-icon></button>
+            <button type="button" class="icon-action" title="numbered list" @mousedown="${(e)=>this.exec('insertOrderedList',e)}"><near-icon name="format_list_numbered"></near-icon></button>
+            <button type="button" class="icon-action" title="bulleted list" @mousedown="${(e)=>this.exec('insertUnorderedList',e)}"><near-icon name="format_list_bulleted"></near-icon></button>
             ${ "nearCart" in window?
-                html`<mwc-icon title="add to cart" @mousedown="${this.createProduct}">add_shopping_cart</mwc-icon>`
+                html`<button type="button" class="icon-action" title="add to cart" @mousedown="${this.createProduct}"><near-icon name="add_shopping_cart"></near-icon></button>`
                 : ''
             }
-            <mwc-icon title="no hace nada todavía">short_text</mwc-icon>
-            <mwc-icon title="clear format" @mousedown="${(e)=>this.exec('removeFormat',e)}">format_clear</mwc-icon>
+            <button type="button" class="icon-action" title="no hace nada todavia"><near-icon name="short_text"></near-icon></button>
+            <button type="button" class="icon-action" title="clear format" @mousedown="${(e)=>this.exec('removeFormat',e)}"><near-icon name="format_clear"></near-icon></button>
             
-            <mwc-icon title="code" @mousedown="${this.code}">code</mwc-icon>
+            <button type="button" class="icon-action" title="code" @mousedown="${this.code}"><near-icon name="code"></near-icon></button>
             
         `
     }
@@ -374,7 +394,7 @@ class SectionControlImpl extends SectionControl {
             <label>HTML
             <textarea id="code" @input="${this.checkHTMLEvent}">${this.getCode()}</textarea>
             </label>
-            <div class="submit"><span id="msg"></span><mwc-icon title="OK" disabled id="okbutton" @mousedown="${this.putCodeFromForm}">done</mwc-icon></div>
+            <div class="submit"><span id="msg"></span><button type="button" class="icon-action" title="OK" disabled id="okbutton" @mousedown="${this.putCodeFromForm}"><near-icon name="done"></near-icon></button></div>
             </div>
         `;
     }
@@ -442,9 +462,9 @@ class SectionControlImpl extends SectionControl {
         return html`
             <div class="control">
             ${this.focused? this.editControls() : ""}
-            <mwc-icon title="duplicate section" @click="${this.cloneSection}">content_copy</mwc-icon>
-            <mwc-icon title="insert section" @click="${this.addSection}" plus >add</mwc-icon>
-            <mwc-icon title="remove section" @click="${this.deleteSection}">delete</mwc-icon>
+            <button type="button" class="icon-action" title="duplicate section" @click="${this.cloneSection}"><near-icon name="content_copy"></near-icon></button>
+            <button type="button" class="icon-action" title="insert section" @click="${this.addSection}" plus><near-icon name="add"></near-icon></button>
+            <button type="button" class="icon-action" title="remove section" @click="${this.deleteSection}"><near-icon name="delete"></near-icon></button>
             </div>
             ${false && this.parentElement && this.parentElement.childElementCount<2?
             html`<div class="dropper">${this.typeButtons()}</div>` : ""}
@@ -551,12 +571,12 @@ class FigureControl extends SectionControl {
         if(this.scrapped) {
             let data=this.scrapped;
             if(data.oembed)
-                t.push(html`<button @click="${this.selectOembed}">oEmbed</button>`);
+                t.push(html`<button type="button" @click="${this.selectOembed}">oEmbed</button>`);
             if(data.og)
-                t.push(html`<button @click="${this.selectOpenGraph}">opengraph</button>`);
+                t.push(html`<button type="button" @click="${this.selectOpenGraph}">opengraph</button>`);
             if(data.twitter)
-                t.push(html`<button @click="${this.selectCard}">card</button>`);
-            t.push(html`<div class="submit"><span id="msg"></span><mwc-icon title="done" id="donebutton" @click="${this.view}">done</mwc-icon></div>`);             
+                t.push(html`<button type="button" @click="${this.selectCard}">card</button>`);
+            t.push(html`<div class="submit"><span id="msg"></span><button type="button" class="icon-action" title="done" id="donebutton" @click="${this.view}"><near-icon name="done"></near-icon></button></div>`);             
         }
         
         return t;
@@ -568,7 +588,7 @@ class FigureControl extends SectionControl {
             <label>HTML
             <textarea id="code" @input="${this.checkHTMLEvent}">${this.getCode()}</textarea>
             </label>
-            <div class="submit"><span id="msg"></span><mwc-icon title="OK" disabled id="okbutton" @mousedown="${this.putCodeFromForm}">done</mwc-icon></div>
+            <div class="submit"><span id="msg"></span><button type="button" class="icon-action" title="OK" disabled id="okbutton" @mousedown="${this.putCodeFromForm}"><near-icon name="done"></near-icon></button></div>
             </div>
         `;
     }
@@ -589,16 +609,16 @@ class FigureControl extends SectionControl {
         }
         return html`
             <div class="control">
-            <mwc-icon title="link" @mousedown="${this.link}">link</mwc-icon>
-            <mwc-icon title="gallery" @click="${this.resources}">image_search</mwc-icon>
-            <mwc-icon title="embed" @click="${this.embed}">video_library</mwc-icon>
-            <mwc-icon title="code" @click="${this.code}">code</mwc-icon>
-            <mwc-icon title="float left" @mousedown="${this.left}">format_align_left</mwc-icon>
-            <mwc-icon title="center" @mousedown="${this.center}">format_align_center</mwc-icon>
-            <mwc-icon title="float right" @mousedown="${this.right}">format_align_right</mwc-icon>
-            <mwc-icon title="up" @mousedown="${this.upward}">arrow_upward</mwc-icon>
-            <mwc-icon title="down" @mousedown="${this.downward}">arrow_downward</mwc-icon>
-            <mwc-icon title="delete" @click="${this.deleteSection}">delete</mwc-icon>
+            <button type="button" class="icon-action" title="link" @mousedown="${this.link}"><near-icon name="link"></near-icon></button>
+            <button type="button" class="icon-action" title="gallery" @click="${this.resources}"><near-icon name="image_search"></near-icon></button>
+            <button type="button" class="icon-action" title="embed" @click="${this.embed}"><near-icon name="video_library"></near-icon></button>
+            <button type="button" class="icon-action" title="code" @click="${this.code}"><near-icon name="code"></near-icon></button>
+            <button type="button" class="icon-action" title="float left" @mousedown="${this.left}"><near-icon name="format_align_left"></near-icon></button>
+            <button type="button" class="icon-action" title="center" @mousedown="${this.center}"><near-icon name="format_align_center"></near-icon></button>
+            <button type="button" class="icon-action" title="float right" @mousedown="${this.right}"><near-icon name="format_align_right"></near-icon></button>
+            <button type="button" class="icon-action" title="up" @mousedown="${this.upward}"><near-icon name="arrow_upward"></near-icon></button>
+            <button type="button" class="icon-action" title="down" @mousedown="${this.downward}"><near-icon name="arrow_downward"></near-icon></button>
+            <button type="button" class="icon-action" title="delete" @click="${this.deleteSection}"><near-icon name="delete"></near-icon></button>
             </div>
             ${t}
         `;
@@ -923,7 +943,14 @@ export class NearEditor extends HTMLDivElement {
         #editDone {color:green;cursor:pointer}
         #editCancel {color:red;cursor:pointer}
         .editBar {text-align:right; opacity:0.5; font-size:15px; clear:both}
-        .editBar mwc-icon {font-size:1cm; text-shadow: 1mm 1mm 1mm #4448; margin:1em;}     
+        .editBar button {
+            min-height:auto;
+            padding:0.5rem;
+            border:none;
+            background:transparent;
+            box-shadow:none;
+        }
+        .editBar near-icon {width:2rem; height:2rem;}
         .focus{border:solid 1px #ccc} 
         #status{font-size:small; color:#8888}      
       </style>
@@ -935,10 +962,10 @@ export class NearEditor extends HTMLDivElement {
         
         ${this.editing? 
         html`
-        <mwc-icon id="editCancel" title="cancel" @click="${this.cancelEdit}">cancel</mwc-icon>
-        <mwc-icon id="editDone"  title="OK" @click="${this.endEdit}" >done</mwc-icon>`
+        <button type="button" id="editCancel" title="cancel" @click="${this.cancelEdit}"><near-icon name="cancel"></near-icon></button>
+        <button type="button" id="editDone"  title="OK" @click="${this.endEdit}" ><near-icon name="done"></near-icon></button>`
         :
-        html`<mwc-icon  id="editControl" title="edit" @click="${this.startEdit}">edit</mwc-icon>`}        
+        html`<button type="button" id="editControl" title="edit" @click="${this.startEdit}"><near-icon name="edit"></near-icon></button>`}        
        </div>
        <div id="status"></div>
        ` :''}
@@ -1249,4 +1276,3 @@ NearSectionLibrary.components=[];
 
 window.nearSectionLibrary=NearSectionLibrary;
 customElements.define('near-section-library', NearSectionLibrary);
-

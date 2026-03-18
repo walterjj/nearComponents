@@ -87,7 +87,7 @@ class NearAppSmoke extends NearApp {
     this.signedLoad = true;
     this.poolId = 'us-east-1_bi3wghKiN';
     this.clientId = '7n72a8kvhpjo8bb6rs910d0rhu';
-    this.baseURL = '';
+    this.baseURL = 'https://www.near.services';
     this.apiURL = 'https://api.near.services/nearservices';
     this.lang = 'es';
     this.signInLabel = 'ingresar';

@@ -1,13 +1,11 @@
 import {LitElement, html, css } from 'lit-element'
-import {Icon} from "@material/mwc-icon"
-import {Formfield} from '@material/mwc-formfield'
-import {Button} from '@material/mwc-button'
 import {NearUser} from "./user";
 import {NearResources} from "./resources";
 import {urlize} from "./urlize";
 import {styles} from "./styles";
 import {NearContent,NearContents, NearContentsSelect} from "./content";
 import {NearBlock} from "./blocks";
+import './near-icon.js';
 
 
 var states= Object.freeze ({
@@ -167,12 +165,14 @@ export class NearCart extends LitElement {
                 .item-increment a , .item-decrement a {text-decoration:none; color:#999 }
                 .item-remove a {text-decoration:none; background-color:white; color:#ff0000; display:inline-block;margin:2px;border:solid 1px; border-radius:.3em; }
                 .item-controls {display:flex; flex-direction:column; text-align:center }
-                .item-controls mwc-icon{color:#8888;cursor:pointer; }
+                .item-controls button{min-height:auto; padding:0.2rem; border:none; background:transparent; box-shadow:none; color:#8888; cursor:pointer; }
+                .item-controls near-icon{width:1rem; height:1rem;}
                 #total{font-size:larger;}
                 .total > div {display:inline-block;padding:.5em}
                 .total_label{font-weight:bold;text-align:right}
                 #total_row td{border-top:solid 2px #888}
                 #edit-control{position:absolute; font-size:14px; right:1px ; bottom:3px; cursor:pointer}
+                #edit-control near-icon{width:1rem; height:1rem;}
 
         
                 .deliveryto {
@@ -344,12 +344,12 @@ export class NearCart extends LitElement {
                 <td class="item-price">${this.currency}  ${item.price.toFixed(2) || ''}</td>
                 <td class="item-quantity"> ${item.qty}</td>
                 <td class="item-controls">
-                        <mwc-icon title="+" @click="${()=>this.increaseQTY(i)}">keyboard_arrow_up</mwc-icon>
+                        <button type="button" title="+" @click="${()=>this.increaseQTY(i)}"><near-icon name="keyboard_arrow_up"></near-icon></button>
                        
-                        <mwc-icon title="-" @click="${()=>this.decreaseQTY(i)}">keyboard_arrow_down</mwc-icon>
+                        <button type="button" title="-" @click="${()=>this.decreaseQTY(i)}"><near-icon name="keyboard_arrow_down"></near-icon></button>
                 </td>
                 <td class="item-total">${this.currency} ${(item.price * item.qty).toFixed(2) || ''}</td>
-                <td class="item-controls"> <mwc-icon title="${i18n("remove")}" @click="${()=>this.removeItem(i)}">delete</mwc-icon></td> 
+                <td class="item-controls"><button type="button" title="${i18n("remove")}" @click="${()=>this.removeItem(i)}"><near-icon name="delete"></near-icon></button></td> 
                 </tr>
                 `;
         }
@@ -407,8 +407,8 @@ export class NearCart extends LitElement {
                 type="text" .value="${this.cartId || window.location.pathname}" autofocus>
                 </label>
                 <form-actions>
-                <mwc-button @click="${this.cancel}" >${i18n("cancel")}</mwc-button>
-                <mwc-button @click="${this.endEdit}" >${i18n("OK")}</mwc-button>
+                <button type="button" @click="${this.cancel}" >${i18n("cancel")}</button>
+                <button type="button" data-variant="primary" @click="${this.endEdit}" >${i18n("OK")}</button>
                 </form-actions>
                 </div>
                 </near-modal>`  
@@ -466,8 +466,8 @@ export class NearCart extends LitElement {
                 :''}
                 
                 <form-actions>
-                <mwc-button @click="${this.cancel}" >${i18n("cancel")}</mwc-button>
-                <mwc-button @click="${this.send}" >${i18n("send")}</mwc-button>
+                <button type="button" @click="${this.cancel}" >${i18n("cancel")}</button>
+                <button type="button" data-variant="primary" @click="${this.send}" >${i18n("send")}</button>
                 </form-actions>
                 </div>
                 </near-modal>`  
@@ -527,7 +527,7 @@ export class NearCart extends LitElement {
                 <label>${i18n("message")}</label>
                 <pre>${msg}</pre>
                 <form-actions>
-                <mwc-button @click="${this.cancel}" >${i18n("cancel")}</mwc-button>
+                <button type="button" @click="${this.cancel}" >${i18n("cancel")}</button>
                 <a class="wa" target="_blank" href="${hrefWeb}"  @click="${this.done}" >${i18n("order via")}<br>web WHATSAPP</a>
                 <a class="wa" target="_blank" href="${href}"  @click="${this.done}" >${i18n("order via")}<br>WHATSAPP</a>
                 </form-actions>
@@ -543,8 +543,8 @@ export class NearCart extends LitElement {
                                 
                                 <div id="items"><table>${this.renderCart()}</table></div>
                                 <div id="bottom">
-                                <mwc-icon id="open" title="view cart" @click="${this.openCart}">shopping_cart</mwc-icon>
-                                <mwc-icon id="close" title="hide cart" @click="${this.closeCart}">expand_more</mwc-icon>        
+                                <button type="button" id="open" title="view cart" @click="${this.openCart}"><near-icon name="shopping_cart"></near-icon></button>
+                                <button type="button" id="close" title="hide cart" @click="${this.closeCart}"><near-icon name="expand_more"></near-icon></button>        
                                 ${this.data.total && 
                                         html`<span id="total_row"><span class="total_label">Total</span><span id="total">${this.currency} ${this.data.total.toFixed(2)}</span></span>`}
 
@@ -554,7 +554,7 @@ export class NearCart extends LitElement {
                                 <br/>        
                                 <slot></slot>
                                 ${NearUser.canEdit()?
-                                        html`<mwc-icon id="edit-control" title="edit" @click="${()=>this.state=states.editing}" >edit</mwc-icon>`:``} 
+                                        html`<button type="button" class="near-icon-button" id="edit-control" title="edit" @click="${()=>this.state=states.editing}" ><near-icon name="edit"></near-icon></button>`:``} 
                                 </form-actions>
                                 </div>        
                                 `;
@@ -718,7 +718,8 @@ export class NearProduct extends NearBlock {
                         ::slotted(img:hover) {max-width:fit-content;position:absolute; border:solid 1px #8888}
 
                         input[type=number] {width:30px;margin:3px; text-align:right}
-                        mwc-icon-button[icon=delete], mwc-icon-button[icon=add], mwc-icon-button[icon=edit] {color:#8888; font-size:x-small; z-index:1000; margin-left:12px}
+                        .product-action {min-height:auto; padding:0.25rem; margin-left:12px; border:none; background:transparent; box-shadow:none; color:#8888; cursor:pointer;}
+                        .product-action near-icon {width:1rem; height:1rem;}
                         div {white-space:nowrap}
                         slot[name=description]{white-space:normal}
                         style{display:none}; 
@@ -768,14 +769,14 @@ export class NearProduct extends NearBlock {
                 <label>
                 <label>
                 ${i18n`Image`}
-                <mwc-button @click="${()=>this.resources(300)}">Select...</mwc-button>
+                <button type="button" @click="${()=>this.resources(300)}">Select...</button>
                 ${this.o.image?
                         html`<img @click="${()=>this.resources(300)}" src="${this.o.image}">`:''}
                 </label>
                 `  
         }
         getIcon(){
-                return  '<mwc-icon>shopping_cart</mwc-icon> prod.' ;
+                return  '<near-icon name="shopping_cart"></near-icon> prod.' ;
         }
 
         getEditedHTML(){
@@ -794,11 +795,11 @@ export class NearProduct extends NearBlock {
                 return html`
                 <div><slot name="image"></slot><slot name="description" ></slot></div>
                 <div>${window.nearCart && window.nearCart.currency}<slot  name="price" tabindex="0"></slot></div>
-                <div><input type="number" id="qty" value="1"><mwc-icon-button title="add to cart" @click="${this.addToCart}" icon="add_shopping_cart" ></mwc-icon-button>
+                <div><input type="number" id="qty" value="1"><button type="button" class="product-action" title="add to cart" @click="${this.addToCart}"><near-icon name="add_shopping_cart"></near-icon></button>
                 ${false && NearUser.canEdit()? 
-                html`<mwc-icon-button title="delete" @click="${this.delete}" icon="delete" ></mwc-icon-button>
-                     <mwc-icon-button title="dup" @click="${this.duplicate}" icon="add" ></mwc-icon-button>
-                     <mwc-icon-button title="edit" @click="${this.startEdit}" icon="edit" ></mwc-icon-button>` 
+                html`<button type="button" class="product-action" title="delete" @click="${this.delete}"><near-icon name="delete"></near-icon></button>
+                     <button type="button" class="product-action" title="dup" @click="${this.duplicate}"><near-icon name="add"></near-icon></button>
+                     <button type="button" class="product-action" title="edit" @click="${this.startEdit}"><near-icon name="edit"></near-icon></button>` 
                 :''}
                 </div>
                 `

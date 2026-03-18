@@ -586,7 +586,7 @@ export class NearUser extends LitElement {
     
      <user-picture id="picture" 
           @picture-change="${this.uploadPicture}"
-          src="${this.picture}"></user-picture> 
+          src="${this.baseURL}${this.picture}"></user-picture> 
      
      <label>Email
        <input disabled name="email" id="email" 
@@ -624,7 +624,7 @@ export class NearUser extends LitElement {
     <div>
      <user-picture id="picture" 
           @picture-change="${this.uploadPicture}"
-          src="${this.picture}"></user-picture> 
+          src="${this.baseURL}${this.picture}"></user-picture> 
      
      <div id="message">${this.message}</div>
      <button type="button" data-variant="primary" id="proceed" @click="${()=>this.state=status.LOGGED}" >${i18n`close`}</button>
@@ -671,7 +671,7 @@ export class NearUser extends LitElement {
               <near-dropdown id="menu" align="end">
                 <button id="name_button" class="inverse" slot="trigger">
                 ${ this.picture?
-                  html`<img src="${this.picture}">`
+                  html`<img src="${this.baseURL}${this.picture}">`
                   : this.nameInitials()}
                 </button>
                 <button type="button" class="near-menu-item" @click="${this.doAction}" >go</button>
@@ -1075,7 +1075,7 @@ export class NearUser extends LitElement {
       
       if(this.pictureFile){
           var headers=new Headers();
-          this.picture=`${this.baseURL}/profiles/${this.sub}/${this.pictureFile.name}`;
+          this.picture=`/profiles/${this.sub}/${this.pictureFile.name}`;
           if (this.session) headers.append("Authorization",this.session.idToken.getJwtToken())
           //console.log("doAction")
           const field = this.shadowRoot.getElementById('picture');
