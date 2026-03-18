@@ -1,5 +1,4 @@
 import { LitElement, html, css } from 'lit-element';
-import {Icon} from "@material/mwc-icon"
 
 
 export class UserPicture extends LitElement {
@@ -127,5 +126,4 @@ export class UserPicture extends LitElement {
 }
 
 customElements.define('user-picture', UserPicture);
-
 

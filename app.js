@@ -3,37 +3,31 @@
 
 */
 
-
-import { Drawer } from '@material/mwc-drawer'
-import { TopAppBarFixed } from '@material/mwc-top-app-bar-fixed'
-
-import { IconButton } from '@material/mwc-icon-button'
-import { Icon } from '@material/mwc-icon'
-import { Menu } from '@material/mwc-menu';
-import '@material/mwc-list';
-
-
-
 import { NearUser } from "./user.js";
-import './menu2.js'
 import { LitElement, html, css } from 'lit-element';
-import { render } from 'lit-html';
 import { NearLocation, NearRoute } from './route.js';
-import { NearContent } from './content.js'
-import { NearArticle } from './article.js'
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
+import './near-icon.js';
+import './near-dropdown.js';
+import './drawerbutton.js';
+import { trackGa } from './analytics.js';
+import { nearPicoTokens, nearControlStyles } from './ui.css.js';
 
 
 export class NearApp extends LitElement {
 
 
         static get styles() {
-                return css`
+                return [
+                nearPicoTokens,
+                nearControlStyles,
+                css`
   
                 :host {
                         --swiper-right: 2em;
-                        --container-max-width: 1024px;   
-                        --toolbar-width: 100%;     
+                        --container-max-width: 1024px;
+                        --toolbar-width: 100%;
+                        --near-toolbar-height: 50px;
                         display: block;
                         }
                 a {
@@ -46,51 +40,207 @@ export class NearApp extends LitElement {
 
                 }
 
-                header.mdc-top-app-bar {
-                        width: var(--toolbar-width);
-                }
-
-                mwc-top-app-bar-fixed {
-                }
                 .toolbar {
-                        display:flex;
-                       font-size:14px;
-                }
-                .toolbar img {vertical-align:middle}
-                .toolbar near-selector {
+                        position:sticky;
+                        top:0;
+                        z-index:1000;
+                        box-sizing:border-box;
                         display:flex;
                         align-items:center;
+                        justify-content:space-between;
+                        gap:1rem;
+                        height:var(--near-toolbar-height);
+                        padding:0 1rem;
+                        width:100%;
+                        font-size:14px;
+                        color:var(--near-primary-inverse, #fff);
+                        background:var(--near-primary-background, #034);
+                        box-shadow:var(--near-box-shadow);
+                }
+                .toolbar img {vertical-align:middle}
+                .toolbar-main,
+                .toolbar-actions {
+                        display:flex;
+                        align-items:center;
+                }
+                .toolbar-main {
+                        gap:0.75rem;
+                        min-width:0;
+                        flex:1 1 auto;
+                }
+                .toolbar-actions {
+                        gap:0.75rem;
+                        justify-content:flex-end;
+                        flex:1 1 auto;
+                }
+                .toolbar-title {
+                        min-width:0;
+                        font-size:1.05rem;
+                        font-weight:600;
+                        white-space:nowrap;
+                        overflow:hidden;
+                        text-overflow:ellipsis;
+                }
+                .toolbar-menu-button {
+                        color:inherit;
+                        border-color:transparent;
+                        background:transparent;
+                        box-shadow:none;
+                }
+                .toolbar-menu-button:hover,
+                .toolbar-menu-button:focus-visible {
+                        color:inherit;
+                        border-color:rgb(255 255 255 / 0.35);
+                        background:rgb(255 255 255 / 0.12);
+                }
+                .toolbar-nav {
+                        display:flex;
+                        align-items:center;
+                        gap:0.25rem;
+                        flex-wrap:wrap;
+                }
+                .toolbar-nav a,
+                .toolbar-nav button,
+                .topbar-item {
+                        margin:0;
+                        border:1px solid transparent;
+                        border-radius:999px;
+                        display:inline-flex;
+                        align-items:center;
+                        gap:0.4rem;
+                        padding:0.625rem 0.875rem;
+                        position:relative;
+                        cursor:pointer;
+                        text-decoration: none;
+                        color:inherit;
+                        background:transparent;
+                        font:inherit;
+                        font-variant-caps:small-caps !important;
+                }
+                .toolbar-nav a:hover,
+                .toolbar-nav button:hover,
+                .topbar-item:hover,
+                .toolbar-nav a.near-selected,
+                .toolbar-nav button.near-selected,
+                .topbar-item.near-selected {
+                        border-color:rgb(255 255 255 / 0.3);
+                        background:rgb(255 255 255 / 0.12);
+                        color:inherit;
+                }
+                .toolbar-nav near-dropdown::part(panel) {
+                        margin-top:0.25rem;
+                }
+                .toolbar-nav near-dropdown .near-menu-item,
+                .toolbar-actions near-dropdown .near-menu-item {
+                        color:var(--near-color);
+                }
+                .toolbar-user {
+                        display:flex;
+                        align-items:center;
+                }
+                .app-shell {
+                        position:relative;
+                        display:block;
+                        min-height:calc(100vh - var(--near-toolbar-height));
+                }
+                .drawer-backdrop {
+                        position:fixed;
+                        inset:0;
+                        background:rgb(15 23 34 / 0.45);
+                        opacity:0;
+                        pointer-events:none;
+                        transition:opacity 160ms ease;
+                        z-index:990;
+                }
+                .drawer-panel {
+                        position:fixed;
+                        top:var(--near-toolbar-height);
+                        left:0;
+                        bottom:0;
+                        width:min(19rem, calc(100vw - 2rem));
+                        padding:1rem 0;
+                        border-right:1px solid var(--near-border-color);
+                        background:var(--near-surface-color, #fff);
+                        box-shadow:var(--near-box-shadow);
+                        overflow:auto;
+                        transform:translateX(-105%);
+                        transition:transform 160ms ease;
+                        z-index:995;
+                }
+                .app-shell.drawer-open .drawer-backdrop {
+                        opacity:1;
+                        pointer-events:auto;
+                }
+                .app-shell.drawer-open .drawer-panel {
+                        transform:translateX(0);
+                }
+                .app-shell.drawer-static {
+                        padding-left:18rem;
+                }
+                .app-shell.drawer-static .drawer-backdrop {
+                        display:none;
+                }
+                .app-shell.drawer-static .drawer-panel {
+                        width:18rem;
+                        transform:none;
+                }
+                .drawer-header {
+                        display:grid;
+                        gap:0.25rem;
+                        padding:0 1.25rem 1rem;
+                        border-bottom:1px solid var(--near-border-color);
+                        margin-bottom:1rem;
+                }
+                .drawer-title {
+                        font-size:1rem;
+                        font-weight:700;
+                        color:var(--near-color);
+                }
+                .drawer-content div > a,
+                .drawer-link{
+                        display:block;
+                        text-align:left;
+                        margin:0 0.75rem;
+                        padding:.65rem .8rem;
+                        border-radius:0.75rem;
+                        color:var(--near-color);
+                        cursor:pointer;
+                        text-decoration: none;
+                }
+                .drawer-content div > a:hover,
+                .drawer-link:hover,
+                .drawer-link.near-selected {
+                        background:var(--near-primary-soft);
+                        color:var(--near-primary);
+                }
+                .drawer-group-title{
+                        font-size: 0.8rem;
+                        font-weight:700;
+                        letter-spacing:0.08em;
+                        text-transform:uppercase;
+                        text-align:left;
+                        color:var(--near-muted-color);
+                        margin:0 1.5rem 0.75rem;
+                }
+                .drawer-group-separator{
+                        width:calc(100% - 3rem);
+                        border-top:solid 1px var(--near-border-color);
+                        margin:1rem 1.5rem;
+                }
+                .menu-trigger near-icon {
+                        font-size:0.95em;
+                }
+                #app-content {
+                        min-width:0;
                 }
 
 
                 .main-content{
                         
-                        min-height:calc(100vh - 64px);
+                        min-height:calc(100vh - var(--near-toolbar-height));
                         text-align:left;
                         margin:1em;
                 }
-
-                .tabs {
-                        height: 100%;
-                        @apply --layout-horizontal;
-                }
-
-                .tabs > a, .topbar-item {
-                        margin: 12px 16px 12px;
-                        border-bottom: 1px solid #fff8;
-                        display:inline-block;
-                        position:relative;
-                        cursor:pointer;
-                        text-decoration: none;
-                        color:white;
-                        font-variant-caps:small-caps !important;
-                }
-  
-                near-selector > a.near-selected {
-                        border-bottom:solid 1px #fff2;
-                }
-
-                .tabs > a:hover, .topbar-item:hover{ color:#fffc;}
 
                 #pages {
                         border-bottom:solid  1px #8884;
@@ -126,7 +276,7 @@ export class NearApp extends LitElement {
                         position:relative;
                         @apply --layout-horizontal;
                         @apply --layout-center-center;
-                        height: calc(100vh - 64px);
+                        height: calc(100vh - var(--near-toolbar-height));
                         padding: 0 16px;
                         background-image: url('/jm1440.jpg');
                         background-repeat: no-repeat;
@@ -172,32 +322,9 @@ export class NearApp extends LitElement {
                         
                 }
 
-                mwc-drawer {
-                        display:block;
-                }
-                
-                .drawer-content div > a{
-                        display:block;
-                        text-align:left;
-                        margin-left:2em;
-                        padding:.5em;
-                        color:#555;
-                        cursor:pointer;
-                        text-decoration: none;
-                }
-                .drawer-content h2{
-                        font-size: 1.2em;
-                        font-weight:300;
-                        text-align:left;
-                        margin-left:1em;
-                        acolor:#ccc;
-                        text-transform:Capitalize;
-                        aborder-bottom: solid 1px #ccc;
-                }
-
                 .main-contentsection {
                         padding: 88px 16px;
-                        min-height: calc(50vh - 64px);
+                        min-height: calc(50vh - var(--near-toolbar-height));
                 }
 
                 header.banner {
@@ -248,7 +375,7 @@ export class NearApp extends LitElement {
                 #mdsection {
                         padding: 1em 0px;
                         nfont-family: 'Cormorant Garamond', serif;
-                        min-height: calc(50vh - 64px);
+                        min-height: calc(50vh - var(--near-toolbar-height));
                 }
                 
                 
@@ -318,6 +445,43 @@ export class NearApp extends LitElement {
                         }
                         
 
+                }
+                @media (max-width: 900px) {
+                        .toolbar {
+                                flex-wrap:wrap;
+                        }
+                        .toolbar-actions {
+                                width:100%;
+                                justify-content:space-between;
+                        }
+                        .toolbar-nav {
+                                order:2;
+                                width:100%;
+                                overflow:auto;
+                                flex-wrap:nowrap;
+                                padding-bottom:0.25rem;
+                        }
+                }
+                @media (max-width: 700px) {
+                        .app-shell.drawer-static {
+                                padding-left:0;
+                        }
+                        .app-shell.drawer-static .drawer-panel {
+                                width:min(19rem, calc(100vw - 2rem));
+                                transform:translateX(-105%);
+                        }
+                        .app-shell.drawer-static.drawer-open .drawer-panel {
+                                transform:translateX(0);
+                        }
+                        .app-shell.drawer-static .drawer-backdrop {
+                                display:block;
+                        }
+                        .toolbar-actions {
+                                align-items:flex-start;
+                        }
+                        .toolbar-user {
+                                margin-left:auto;
+                        }
                 }
 
                 h3 {
@@ -396,21 +560,22 @@ export class NearApp extends LitElement {
                 
                 .toc li{list-style-type:none}
                 
-        `;
+        `
+        ];
 
         }
         renderDrawerItem(item) {
                 return html`
-                        <a is="near-route" href="${item.href}">${item.label}</a>
+                        <a class="drawer-link ${this.isCurrentPath(item.href) ? 'near-selected' : ''}" is="near-route" href="${item.href}">${item.label}</a>
                 `
         }
         renderDrawerList(item) {
                 return html`
-                        <h2>${item.label}</h2>
+                        <div class="drawer-group-title">${item.label}</div>
                         ${item.items?.map(item => {
                         return this.renderDrawerItem(item)
                 })}
-                <div style="width:100%; border-top:solid 1px rgb(204, 204, 204); margin:2em 0 2em 0;"></div>
+                <div class="drawer-group-separator"></div>
                 `
         }
 
@@ -422,34 +587,44 @@ export class NearApp extends LitElement {
                                 .forEach(group=>{
                                         let name=group.substring(4);
                                         r.push(
-                                                html`<mwc-list-item><drawer-button is="near-route" icon="${icon}" name="${name}" href="/app/${name}/">${name.replace('_', ' ')}</drawer-button></mwc-list-item>`
+                                                html`<drawer-button icon="${icon}" href="/app/${name}/">${name.replace('_', ' ')}</drawer-button>`
                                         );
                                 });
                 }
                 return r;
         }
 
+        isCurrentPath(href='') {
+                if (!href) return false;
+                const pathname = window.location.pathname;
+                return pathname === href || pathname.endsWith(href);
+        }
+
         renderMenuItem(item) {
                 return html`
-                <a class="topbar-item" is="near-route" href="${item.href}">${item.label}</a>
+                <a
+                        class="topbar-item ${this.isCurrentPath(item.href) ? 'near-selected' : ''}"
+                        data-route-link
+                        is="near-route"
+                        href="${item.href}"
+                >${item.label}</a>
         `
         }
 
         renderMenuList(item) {
                 return html`
-                
-               
-                        <near-menu2 style="--background-color:#999999">
-                                 <a class="topbar-item" slot="title">${item.label}</a>
+                        <near-dropdown align="start">
+                                 <button type="button" class="topbar-item menu-trigger" slot="trigger">
+                                         ${item.label}
+                                         <near-icon name="arrow_drop_down"></near-icon>
+                                 </button>
                                 ${item.items?.map(item => {
                                         return html`
-                                        <div>
-                                        <a class="topbar-item" style="color:white" is="near-route" href="${item.href}">${item.label}</a>
-                                        </div>
+                                        <a class="near-menu-item" is="near-route" href="${item.href}">${item.label}</a>
                                         `
                                         
                                 })}
-                        </near-menu2>
+                        </near-dropdown>
         `
         }
 
@@ -478,30 +653,27 @@ export class NearApp extends LitElement {
         pageMenu() {
                 if (NearUser.canCreate() || NearUser.canEdit())
                         return html`
-          <a name="edit" href="#" @click="${this.openMenu}" >Edit...
-            <mwc-menu id="edit-menu">
-            <near-list>
+          <near-dropdown id="edit-menu" align="start">
+            <button type="button" class="topbar-item menu-trigger" slot="trigger">Edit...
+              <near-icon name="arrow_drop_down"></near-icon>
+            </button>
             ${NearUser.canCreate() ?
-                                        html`<near-list-item @click="${this.newArticle}"  label="New Article..."></near-list-item>
-            <near-list-item @click="${this.articles}" label="Articles..."></near-list-item>
+                                        html`<button type="button" class="near-menu-item" @click="${this.newArticle}">New Article...</button>
+            <button type="button" class="near-menu-item" @click="${this.articles}">Articles...</button>
             ` : ''}
 
             ${NearUser.canEdit() ?
-                                        html`<hr>
-            <near-list-item @click="${this.editMeta}"  label="Edit Meta..."></near-list-item>
+                                        html`<button type="button" class="near-menu-item" @click="${this.editMeta}">Edit Meta...</button>
             `: ''}
  
             ${NearUser.canAdmin() ?
                                         html`
-            <hr>
-            admin
-            <near-list-item @click="${this.newContent}"  label="New Content..."></near-list-item>
-            <near-list-item @click="${this.invalidate}" label="Clear CDN Cache"></near-list-item>
+            <button type="button" class="near-menu-item" @click="${this.newContent}">Admin: New Content...</button>
+            <button type="button" class="near-menu-item" @click="${this.invalidate}">Admin: Clear CDN Cache</button>
             `
                                         : ''}
-               
-            </near-list>  
-            </mwc-menu></a>
+
+            </near-dropdown>
          `
                 return ''
 
@@ -514,19 +686,23 @@ export class NearApp extends LitElement {
         }
 
         renderTopBar() {
-                return html`<mwc-top-app-bar-fixed dense class="toolbar">
-          <mwc-icon-button slot="navigationIcon" icon="menu" @click="${this.handleNavigationClick}"></mwc-icon-button>
-          <div slot="title">${this.topBarTitle()}</div>
-  
-          <near-selector class="tabs" role="navigation" slot="actionItems">
+                return html`<header class="toolbar">
+          <div class="toolbar-main">
+          <button type="button" class="near-icon-button toolbar-menu-button" @click="${this.handleNavigationClick}" aria-label="Open navigation">
+            <near-icon name="menu"></near-icon>
+          </button>
+          <div class="toolbar-title">${this.topBarTitle()}</div>
+          </div>
+
+          <div class="toolbar-actions">
+          <nav class="toolbar-nav" role="navigation">
           ${this.menu()}
           ${this.pageMenu()}
           ${this.userExtra()}
-          ${this.component && this.component.navMenu ? this.component.navMenu() : ''}  
-          </near-selector>
+          ${this.component && this.component.navMenu ? this.component.navMenu() : ''}
+          </nav>
           <near-user
-          style="padding:1em;" 
-          slot="actionItems"
+          class="toolbar-user"
           poolId="${this.poolId}"
           clientId="${this.clientId}"
           baseURL="${this.baseURL}"
@@ -537,24 +713,27 @@ export class NearApp extends LitElement {
           signInLabel="${this.signInLabel}"
           ?noregister="${this.noregister}"
           >user</near-user> 
-
-          </mwc-top-app-bar-fixed>`
+          </div>
+          </header>`
         }
 
         render() {
 
                 return html`
         ${this.fixedTopBar ? this.renderTopBar() : ""}
-        <mwc-drawer id="drawer" nhasHeader  @MDCDrawer:opened="${this.drawerOpened}" @MDCDrawer:closed="${this.drawerClosed}" type="modal" nclick="${this.closeDrawer}">
-        <span slot="title">${this.topBarTitle()}</span>
-        <span slot="subtitle"></span>
+        <div class="app-shell ${this.drawerStatic ? 'drawer-static' : ''} ${this.drawerOpen ? 'drawer-open' : ''}">
+        <div class="drawer-backdrop" @click="${this.closeDrawer}"></div>
+        <aside id="drawer" class="drawer-panel" @click="${this.handleDrawerClick}">
+        <div class="drawer-header">
+        <div class="drawer-title">${this.topBarTitle()}</div>
+        </div>
         <div class="drawer-content">
-
-                <div  id="drawer-menu" class="ntabs" role="navigation" slot="actionItems" >
+                <div  id="drawer-menu" class="ntabs" role="navigation" >
                 ${this.drawerMenu()}
                 </div>
-        </div> 
-        <div id="app-content" slot="appContent">
+        </div>
+        </aside>
+        <div id="app-content">
         ${this.fixedTopBar ? "" : this.renderTopBar()}         
                 <div class="main-content">     
                 ${this.internalPage()}
@@ -562,7 +741,7 @@ export class NearApp extends LitElement {
                 </div>
                 <site-footer></site-footer> 
         </div>
-        </mwc-drawer>`
+        </div>`
 
         }
 
@@ -590,6 +769,10 @@ export class NearApp extends LitElement {
                         signedIn: {
                                 type: Boolean,
                                 default: false
+                        },
+                        drawerOpen: {
+                                type: Boolean,
+                                reflect: true
                         }
                 };
         }
@@ -599,6 +782,8 @@ export class NearApp extends LitElement {
         constructor() {
                 super();
                 this.signedLoad = true;
+                this.drawerOpen = false;
+                this.drawerStatic = false;
                 this.addEventListener("end-edit", this.endEdit.bind(this));
 
         }
@@ -641,27 +826,10 @@ export class NearApp extends LitElement {
         }
 
         checkConvertible() {
-
-                let drawer = this.shadowRoot.getElementById("drawer");
-                if (drawer) {
-                        console.log("resize");
-                        if (window.innerWidth >= 800) {
-                                drawer.setAttribute("type", "dismissible");
-                                drawer.removeEventListener("click", this.closeDrawer.bind(this));
-                                drawer.shadowRoot.querySelector("aside").style.position = "fixed";
-                                this.drawerStatic = true;
-                                this.openDrawer();
-                                //this.fixToolbar();                        
-                        }
-                        else {
-                                this.shadowRoot.getElementById("drawer").setAttribute("type", "modal");
-                                drawer.addEventListener("click", this.closeDrawer.bind(this));
-                                this.drawerStatic = false;
-                                this.closeDrawer();
-                                //this.fixToolbar(); 
-                        }
-                }
-
+                console.log("resize");
+                this.drawerStatic = window.innerWidth >= 800;
+                this.drawerOpen = this.drawerStatic;
+                this.requestUpdate();
         }
 
         updated() {
@@ -698,19 +866,8 @@ export class NearApp extends LitElement {
                         this.page = 'view404';
                 }
 
-                let drawer = this.shadowRoot.getElementById("drawer")
-                if (drawer && !this.drawerStatic) drawer.open = false;
+                if (!this.drawerStatic) this.drawerOpen = false;
                 window.scrollTo(0, 0);
-
-                const links = this.shadowRoot.querySelectorAll("near-selector a");
-                links.forEach(link => {
-                        console.log(link, window.location.pathname, link.href);
-                        if (window.location.pathname == link.getAttribute('href') || window.location.pathname.endsWith(link.getAttribute('href')))
-                                link.classList.add('near-selected');
-                        else
-                                link.classList.remove('near-selected');
-
-                })
                 this.pageChanged(this.page);
 
         };
@@ -840,7 +997,8 @@ export class NearApp extends LitElement {
         }
 
         initEditor(content = null) {
-                import("./editor.js");
+                const editorModulePath = './editor.js';
+                import(editorModulePath);
                 if (!content) content = document.querySelector("#content");
                 content.outerHTML = '<div  id="content" is="near-editor"></div>';
                 content = document.querySelector("#content");
@@ -852,12 +1010,8 @@ export class NearApp extends LitElement {
         pageChanged(page) {
                 let baseURL = NearUser.instance ? NearUser.instance.baseURL : "";
                 console.log('pageChanged:' + page);
-                if (ga) {
-                        (async () => {
-                                ga('set', 'page', window.location.pathname);
-                                ga('send', 'pageview');
-                        })();
-                }
+                trackGa('set', 'page', window.location.pathname);
+                trackGa('send', 'pageview');
                 if (this.component) {
                         this.component.destroy && this.component.destroy(this);
                         this.component=null;
@@ -947,17 +1101,13 @@ export class NearApp extends LitElement {
 
         handleNavigationClick() {
                 console.log("navigationClick");
-                let drawer = this.shadowRoot.getElementById("drawer")
-                if (drawer) drawer.open = !drawer.open;
-                if (ga) ga('send', 'event', 'UI', 'menu', window.location.href)
+                this.drawerOpen = !this.drawerOpen;
+                trackGa('send', 'event', 'UI', 'menu', window.location.href);
         }
 
 
         fixToolbar() {
-                let toolbar = this.shadowRoot.querySelector(".toolbar");
-                let header = toolbar.shadowRoot.querySelector("header");
-                if (!this.fixedTopBar) header.style.width = this.shadowRoot.getElementById("drawer").open && this.drawerStatic ? "calc(100% - 256px)" : "100%";
-
+                return;
         }
 
         drawerOpened() {
@@ -969,23 +1119,29 @@ export class NearApp extends LitElement {
         }
 
         openDrawer() {
-                this.shadowRoot.getElementById("drawer").open = true;
+                this.drawerOpen = true;
         }
         closeDrawer() {
-                this.shadowRoot.getElementById("drawer").open = false;
+                this.drawerOpen = false;
         }
 
 
         openMenuByName(name) {
                 let menu = this.shadowRoot.getElementById(name + '-menu');
-                if (menu instanceof Menu) 
-                        menu.open=true;
-                else 
-                        menu && menu.toggleMenu();
+                if (menu && menu.openMenu)
+                        menu.openMenu();
+                else if (menu && menu.toggleMenu)
+                        menu.toggleMenu();
 
         }
         openMenu(e) {
                 this.openMenuByName(e.target.name);
+        }
+
+        handleDrawerClick(e) {
+                if (this.drawerStatic) return;
+                const action = e.composedPath().find(node => node?.tagName === 'A');
+                if (action) this.closeDrawer();
         }
 
         buildPage(e) {
@@ -999,8 +1155,15 @@ export class NearApp extends LitElement {
         }
 
 
-        newContent(e) {
-                let el = new NearContent();
+        async createDialogComponent(type = 'content') {
+                const modulePath = type === 'article' ? './article.js' : './content.js';
+                const module = await import(modulePath);
+                const ComponentClass = type === 'article' ? module.NearArticle : module.NearContent;
+                return new ComponentClass();
+        }
+
+        async newContent(e) {
+                let el = await this.createDialogComponent('content');
                 el.editonly = true;
                 el.editing = true;
                 el.addEventListener('content-create', (e) => {
@@ -1013,8 +1176,8 @@ export class NearApp extends LitElement {
 
         }
 
-        newArticle(e) {
-                let el = new NearArticle();
+        async newArticle(e) {
+                let el = await this.createDialogComponent('article');
                 el.editonly = true;
                 el.editing = true;
                 el.addEventListener('content-create', (e) => {
@@ -1027,12 +1190,16 @@ export class NearApp extends LitElement {
 
         }
 
-        editMeta(e) {
+        articles(e) {
+                console.warn('articles() is not implemented in NearApp');
+        }
+
+        async editMeta(e) {
                 let el = null;
                 if (this.meta && this.meta.type == "article")
-                        el = new NearArticle();
+                        el = await this.createDialogComponent('article');
                 else
-                        el = new NearContent();
+                        el = await this.createDialogComponent('content');
                 el.key = window.location.pathname;
                 el.editonly = true;
                 el.editing = true;
@@ -1061,54 +1228,3 @@ export class NearApp extends LitElement {
 }
 
 window.customElements.define('near-app-base', NearApp);
-
-
-class DrawerButton extends LitElement {
-        static get styles() {
-                return css`
-                        :host{
-                                display:flex;
-                                align-items:center;
-                                padding-left:0em;
-                                
-                        }
-                        a{
-                                text-decoration:none;
-                                display:flex;
-                                align-items:center;
-                                padding:1em 0.5em;
-                                width:100%;
-                                color:inherit;
-                        }
-                        :host(:hover){
-                                opacity:0.8;
-                        }
-                        span{
-                                padding-left:1em;
-                        }
-                        mwc-icon{font-variant:none;}
-                `;
-        }
-        render() {
-                return html`
-                <a is="near-route" href="${this.href}">
-                        <mwc-icon>${this.icon}</mwc-icon>        
-                        <span><slot></slot></span>
-                 </a>
-                `
-        }
-
-        static get properties() {
-                return {
-                        icon: String,
-                        href: String,
-                };
-        }
-}
-
-try {
-    window.customElements.define('drawer-button', DrawerButton);
-}
-catch(e) {
-
-}

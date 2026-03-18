@@ -3,6 +3,10 @@
 //https://stackoverflow.com/questions/47159568/how-to-redirect-after-confirm-amazon-cognito-using-confirmation-url
 
 import { LitElement, html, css } from 'lit-element';
+import './near-icon.js';
+import './near-dropdown.js';
+import { trackGa } from './analytics.js';
+import { nearPicoTokens, nearControlStyles } from './ui.css.js';
 
 let  CognitoUserPool=null; 
 let  CognitoUserAttribute=null; 
@@ -15,16 +19,7 @@ let  CookieStorage=null;
 //AuthenticationDetails=AmazonCognitoIdentity.AuthenticationDetails; 
 //CookieStorage=AmazonCognitoIdentity.CookieStorage; 
 
-
-import {Formfield} from '@material/mwc-formfield'
-import {Button} from '@material/mwc-button'
-import {Icon} from '@material/mwc-icon'
-import { Menu } from '@material/mwc-menu';
-import '@material/mwc-list';
-
-
-import {NearMenu} from './menu.js'
-import {UserPicture} from './user_picture.js'
+import './user_picture.js'
 
 
 
@@ -108,7 +103,10 @@ i18n.db = {
 export class NearUser extends LitElement {
   
   static get styles() {
-  return css`
+  return [
+    nearPicoTokens,
+    nearControlStyles,
+    css`
       :host > near-modal{ position:fixed;height:100vh; top:0; left:0; bottom:0; right:0; background-color: rgba(0,0,0,.5); display:flex; justify-content:center;align-items:center;padding:2em }
       :host([hidden]) { display: none; }
       near-modal a{font-size:-3;color:#555;cursor:pointer}
@@ -150,16 +148,14 @@ export class NearUser extends LitElement {
         color:#057;
         width:100%;
       }
-      near-modal mwc-formfield {
-        flex-direction:column;
-      }
       label{
         display:flex;
         flex-direction:column;
       }
 
       #login_button {
-        --mdc-theme-primary: var(--mdc-theme-on-primary, #888);
+        width:100%;
+        justify-content:center;
       }
       #name_button {
         padding: 0;
@@ -179,16 +175,14 @@ export class NearUser extends LitElement {
           max-width:62px;     
           clip-path: circle(50% at center);
         }
-       mwc-button { margin-top:1em; margin-bottom:1em; } 
+       near-modal button { margin-top:1em; margin-bottom:1em; }
+       #menu::part(panel){ margin-top:.35rem; }
+       .near-menu-item { color:var(--near-color); }
        #message { color:red; font-size:small; margin-top:1em; text-align:center;}
        #links{
           margin-top:3em;
        }
-       mwc-menu{
-        position:relative; 
-        right:0;
-        left: -100px;}   
-      `;
+      `];
     }
 
 
@@ -395,7 +389,7 @@ export class NearUser extends LitElement {
   }
 
   loginForm(){
-    if(ga) ga('send', 'event', 'UI', 'sign-in', window.location.href)
+    trackGa('send', 'event', 'UI', 'sign-in', window.location.href);
     return html`
     <near-modal>
      <div>
@@ -407,14 +401,14 @@ export class NearUser extends LitElement {
        <input name="psw" id="psw" 
          type="password" value="" @change="${this.changePsw}">
      </label>    
-     <mwc-button outlined @click="${this.authenticate}"  >${i18n`authenticate`}</mwc-button>
+     <button type="button" data-variant="primary" @click="${this.authenticate}"  >${i18n`authenticate`}</button>
      <div id="message">${this.message}</div> 
      <div id="links">
      ${ this.noregister? '' : 
      html`<a dense @click="${()=>{this.state=status.SIGNUP  ;console.log('register')}}" >${i18n("register")}</a>`}
      <a dense @click="${()=>{this.state=status.FORGOT }}" >${i18n("forgot password")}</a>
      <a dense @click="${()=>{this.state=status.CONFIRM }}" >${i18n("I have a confirmation code")}</a>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><near-icon name="cancel"></near-icon></a>
      </div>
      </div>
     </near-modal>`
@@ -466,8 +460,8 @@ export class NearUser extends LitElement {
      </label> 
           
      <div id="message">${this.message}</div>      
-     <mwc-button outlined id="proceed" @click="${this.signUp}"  >${i18n`Register!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
+     <button type="button" data-variant="primary" id="proceed" @click="${this.signUp}"  >${i18n`Register!`}</button>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><near-icon name="cancel"></near-icon></a>
     </div>
     </near-modal>
    `; 
@@ -488,8 +482,8 @@ export class NearUser extends LitElement {
          type="number">
      </label>
      <div id="message">${this.message}</div>  
-     <mwc-button @click="${this.confirm}"  >${i18n`Go!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
+     <button type="button" data-variant="primary" @click="${this.confirm}"  >${i18n`Go!`}</button>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><near-icon name="cancel"></near-icon></a>
      
      </div>
      </near-modal>
@@ -506,8 +500,8 @@ export class NearUser extends LitElement {
          type="number">
      </label>
      <div id="message">${this.message}</div>  
-     <mwc-button @click="${this.mfaCode}"  >${i18n`Go!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
+     <button type="button" data-variant="primary" @click="${this.mfaCode}"  >${i18n`Go!`}</button>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><near-icon name="cancel"></near-icon></a>
      
      </div>
      </near-modal>
@@ -537,8 +531,8 @@ export class NearUser extends LitElement {
          type="password" .value="" @keyup="${this.changeNewPsw}"  @change="${this.changeNewPsw}">
      </label> 
      <div id="message">${this.message}</div>       
-     <mwc-button id="proceed"  @click="${this.changePassword}"  >${i18n`Change password!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.LOGGED}"><mwc-icon>cancel</mwc-icon></a>
+     <button type="button" data-variant="primary" id="proceed"  @click="${this.changePassword}"  >${i18n`Change password!`}</button>
+     <a dense @click="${()=>this.state=status.LOGGED}"><near-icon name="cancel"></near-icon></a>
      </div>
     </near-modal>`
   }
@@ -553,8 +547,8 @@ export class NearUser extends LitElement {
          type="email" .value="${this.email}" @change="${this.changeEmail}">
      </label>
      <div id="message">${this.message}</div>      
-     <mwc-button id="proceed" @click="${this.forgotPassword}">${i18n`continue`}</mwc-button>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
+     <button type="button" data-variant="primary" id="proceed" @click="${this.forgotPassword}">${i18n`continue`}</button>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><near-icon name="cancel"></near-icon></a>
     </div>
     </near-modal>
    `; 
@@ -578,8 +572,8 @@ export class NearUser extends LitElement {
          type="password" .value="" @keyup="${this.changeNewPsw}"  @change="${this.changeNewPsw}">
      </label> 
      <div id="message">${this.message}</div>       
-     <mwc-button id="proceed"  @click="${this.confirmForgotPassword}"  >${i18n`Change password!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.ANONIMOUS}"><mwc-icon>cancel</mwc-icon></a>
+     <button type="button" data-variant="primary" id="proceed"  @click="${this.confirmForgotPassword}"  >${i18n`Change password!`}</button>
+     <a dense @click="${()=>this.state=status.ANONIMOUS}"><near-icon name="cancel"></near-icon></a>
      </div>
     </near-modal>`
   }
@@ -616,8 +610,8 @@ export class NearUser extends LitElement {
           
      <div id="message">${this.message}</div>
            
-     <mwc-button id="proceed" @click="${this.updateAttributes}">${i18n`Update!`}</mwc-button>
-     <a dense @click="${()=>this.state=status.LOGGED}"><mwc-icon>cancel</mwc-icon></a>
+     <button type="button" data-variant="primary" id="proceed" @click="${this.updateAttributes}">${i18n`Update!`}</button>
+     <a dense @click="${()=>this.state=status.LOGGED}"><near-icon name="cancel"></near-icon></a>
     </div>
     </near-modal>
    `; 
@@ -633,7 +627,7 @@ export class NearUser extends LitElement {
           src="${this.picture}"></user-picture> 
      
      <div id="message">${this.message}</div>
-     <mwc-button id="proceed" @click="${()=>this.state=status.LOGGED}" >${i18n`close`}</mwc-button>
+     <button type="button" data-variant="primary" id="proceed" @click="${()=>this.state=status.LOGGED}" >${i18n`close`}</button>
     </div>
     </near-modal>
    `; 
@@ -651,7 +645,8 @@ export class NearUser extends LitElement {
     //this.shadowRoot.getElementById('menu').setAttribute('open',true);
     //console.log("openMenu");
     //this.shadowRoot.getElementById('menu').toggleMenu();
-    this.shadowRoot.getElementById('menu').open=true;
+    let menu = this.shadowRoot.getElementById('menu');
+    if (menu && menu.openMenu) menu.openMenu();
   }
 
   /**
@@ -673,25 +668,28 @@ export class NearUser extends LitElement {
                     
             return html`
               <div>
-              <button id="name_button"  class="inverse" @click="${this.openMenu}" label="" icon="arrow_drop_down" trailingicon="">
-              ${ this.picture?
-                html`<img src="${this.picture}">`
-                : this.nameInitials()}
-              </button> 
-              <mwc-menu menu-corner="END" corner="TOP_RIGHT" id="menu">
-                        <mwc-list-item label="go" @click="${this.doAction}" ></mwc-list-item>
-                        <mwc-list-item label="${i18n`edit profile`}" @click="${()=>this.state=status.EDIT_PROFILE}">${i18n`edit profile`}</mwc-list-item>
-                        <mwc-list-item label="${i18n`change picture`}" @click="${()=>this.state=status.EDIT_PICTURE}">${i18n`change picture`}</mwc-list-item>
-                        <mwc-list-item label="${i18n`change password`}" @click="${()=>this.state=status.CHANGEPSW}">${i18n`change password`}</mwc-list-item>
-                        <mwc-list-item label="${i18n`logout`}" @click="${this.logout}">${i18n`logout`}</mwc-list-item>
-              </mwc-menu> 
+              <near-dropdown id="menu" align="end">
+                <button id="name_button" class="inverse" slot="trigger">
+                ${ this.picture?
+                  html`<img src="${this.picture}">`
+                  : this.nameInitials()}
+                </button>
+                <button type="button" class="near-menu-item" @click="${this.doAction}" >go</button>
+                <button type="button" class="near-menu-item" @click="${()=>this.state=status.EDIT_PROFILE}">${i18n`edit profile`}</button>
+                <button type="button" class="near-menu-item" @click="${()=>this.state=status.EDIT_PICTURE}">${i18n`change picture`}</button>
+                <button type="button" class="near-menu-item" @click="${()=>this.state=status.CHANGEPSW}">${i18n`change password`}</button>
+                <button type="button" class="near-menu-item" @click="${this.logout}">${i18n`logout`}</button>
+              </near-dropdown>
               
               </div>
               `
     };
     if (this.state== status.ANONIMOUS) {
       let label= this.signInLabel || i18n('Sign in');
-      return html`<mwc-button id="login_button" dense @click="${()=>{this.state=status.SIGNIN}}" label="${label}" icon="person" trailingicon></mwc-button>
+      return html`<button type="button" id="login_button" @click="${()=>{this.state=status.SIGNIN}}">
+        <near-icon name="person"></near-icon>
+        ${label}
+      </button>
       `;
     }
     else if(this.state == status.FORCED_CHANGEPSW) 
@@ -1428,6 +1426,3 @@ customElements.define('near-user', NearUser);
 
 NearUser.instance=null;
 NearUser.status=status;
-
-
-

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+    <title>nearComponents demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --pico-font-family: ui-sans-serif, system-ui, sans-serif;
+        --pico-font-size: 16px;
+        --pico-line-height: 1.5;
+        --pico-background-color: #f5f7fb;
+        --pico-card-background-color: #ffffff;
+        --pico-color: #1d2733;
+        --pico-muted-color: #637282;
+        --pico-primary: #005a8d;
+        --pico-primary-hover: #00496f;
+        --pico-primary-background: #005a8d;
+        --pico-primary-inverse: #ffffff;
+        --pico-primary-soft-background: rgba(0, 90, 141, 0.12);
+        --pico-border-color: rgba(29, 39, 51, 0.14);
+        --pico-form-element-border-color: rgba(29, 39, 51, 0.18);
+        --pico-border-radius: 0.75rem;
+        --pico-card-box-shadow: 0 1.25rem 3rem -1.75rem rgba(0, 34, 68, 0.35);
+        --pico-spacing: 1rem;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top, rgba(0, 90, 141, 0.1), transparent 28rem),
+          var(--pico-background-color);
+        color: var(--pico-color);
+        font-family: var(--pico-font-family);
+      }
+
+      :root[data-theme='dark'] {
+        color-scheme: dark;
+        --pico-background-color: #0f1722;
+        --pico-card-background-color: #162131;
+        --pico-color: #edf3fb;
+        --pico-muted-color: #93a5b8;
+        --pico-primary: #7dd3fc;
+        --pico-primary-hover: #a5e3ff;
+        --pico-primary-background: #0b7fab;
+        --pico-primary-inverse: #03131d;
+        --pico-primary-soft-background: rgba(125, 211, 252, 0.16);
+        --pico-border-color: rgba(211, 227, 245, 0.14);
+        --pico-form-element-border-color: rgba(211, 227, 245, 0.18);
+        --pico-card-box-shadow: 0 1.5rem 3rem -2rem rgba(0, 0, 0, 0.75);
+      }
+    </style>
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <near-test-app></near-test-app>
+  </body>
+</html>

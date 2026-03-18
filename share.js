@@ -1,6 +1,6 @@
 import {LitElement, html, css} from "lit-element";
 import {IconButton} from '@material/mwc-icon-button'
-
+import { trackGa } from './analytics.js';
 
 
 export class NearShare extends LitElement {
@@ -111,8 +111,7 @@ export class NearShare extends LitElement {
         }
 
         report(s){
-                if(ga) 
-                        ga('send', 'event', 'Share', s, window.location.href );
+                trackGa('send', 'event', 'Share', s, window.location.href );
         }
 
         renderButtons() {
@@ -163,14 +162,14 @@ export class NearShare extends LitElement {
                 console.log(document.querySelector('#sharebtn'));
                 //navigator.share= (o) => {console.log(o);return new Promise(resolve=>{})}
                 if (navigator.share) {
-                        if(ga) ga('send', 'event', 'Share', 'native started', window.location.href);
+                        trackGa('send', 'event', 'Share', 'native started', window.location.href);
                         navigator.share({
                             //title: this.getTitle(),
                             //text: this.getDescription(),
                             url: window.location.href
                         })
-                        .then(() => { if(ga) ga('send', 'event', 'Share', 'native', window.location.href) } ) 
-                        .catch((error) => { if(ga) ga('send', 'event', 'Share', 'native_cancelled', window.location.href)});
+                        .then(() => { trackGa('send', 'event', 'Share', 'native', window.location.href) } ) 
+                        .catch((error) => { trackGa('send', 'event', 'Share', 'native_cancelled', window.location.href)});
                           return;
                 }
                 this.toggle();

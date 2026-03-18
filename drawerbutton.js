@@ -1,8 +1,12 @@
 import { LitElement, html, css } from 'lit-element';
+import './near-icon.js';
+import { nearPicoTokens } from './ui.css.js';
 
 export class DrawerButton extends LitElement {
         static get styles() {
-                return css`
+                return [
+                        nearPicoTokens,
+                        css`
                         :host{
                                 display:flex;
                                 align-items:center;
@@ -21,27 +25,31 @@ export class DrawerButton extends LitElement {
                                 opacity:0.5;
                         }
                         :host(:hover){
-                                background-color:#489DD0;
-                                color:white;
+                                background-color:var(--pico-primary-hover, #489DD0);
+                                color:var(--pico-primary-inverse, white);
+                        }
+                        near-icon{
+                                flex:none;
                         }
                         span{
                                 padding-left:1em;
                         }
-                `;
+                `
+                ];
         }
 
         render() {
                 if(this.href.startsWith("#")) 
                 return html`
                         <a href="${this.href}">
-                                <mwc-icon>${this.icon || "arrow_right"}</mwc-icon>        
+                                <near-icon name="${this.icon || "arrow_right"}"></near-icon>
                                 <span><slot></slot></span>
                         </a>
                         `
                 else        
                 return html`
                         <a is="near-route" href="${this.href}">
-                                <mwc-icon>${this.icon || "arrow_right"}</mwc-icon>        
+                                <near-icon name="${this.icon || "arrow_right"}"></near-icon>
                                 <span><slot></slot></span>
                         </a>
                         `
@@ -62,4 +70,3 @@ try {
 catch(e) {
 
 }
-
