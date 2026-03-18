@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit-element';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js'
-import {Icon} from "@material/mwc-icon"
+import './near-icon.js';
 
 export class Figure extends LitElement {
 
@@ -27,6 +27,21 @@ export class Figure extends LitElement {
                                 float:right;
                         }
                         figure{display:table;margin:auto}
+                        .control{
+                                display:flex;
+                                gap:.5rem;
+                                justify-content:center;
+                                margin-top:.5rem;
+                        }
+                        .control button{
+                                border:none;
+                                background:transparent;
+                                box-shadow:none;
+                                padding:0;
+                                min-height:auto;
+                                color:inherit;
+                                cursor:pointer;
+                        }
                         .dropper {
                                 width:300px; height:300px;
                                 background-color:#888;
@@ -65,9 +80,9 @@ export class Figure extends LitElement {
                         
                         ${this.isContentEditable? 
                         html`<div tabindex=0 class="control">
-                                <a tabindex=0 @click="${this.left}" ><mwc-icon>format_align_left</mwc-icon></a>
-                                <a tabindex=0 @click="${this.center}"><mwc-icon>format_align_center</mwc-icon></a>
-                                <a tabindex=0 @click="${this.right}"><mwc-icon>format_align_right</mwc-icon></a>
+                                <button type="button" tabindex=0 @click="${this.left}" aria-label="align left"><near-icon name="format_align_left"></near-icon></button>
+                                <button type="button" tabindex=0 @click="${this.center}" aria-label="align center"><near-icon name="format_align_center"></near-icon></button>
+                                <button type="button" tabindex=0 @click="${this.right}" aria-label="align right"><near-icon name="format_align_right"></near-icon></button>
                         </div>`:html``}     
                 `;
         }

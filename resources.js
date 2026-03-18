@@ -1,8 +1,8 @@
 import { LitElement, html, css } from 'lit-element';
 //import { Template } from 'lit-html';
 import { NearUser } from './user';
-import {Icon} from "@material/mwc-icon"
-import {Button} from "@material/mwc-button"
+import { nearPicoTokens, nearControlStyles } from './ui.css.js';
+import './near-icon.js';
 
 
 var status= Object.freeze ({
@@ -13,7 +13,7 @@ var status= Object.freeze ({
 
 export class NearResources extends LitElement {
         static get styles() {
-                return css`
+                return [nearPicoTokens, nearControlStyles, css`
                     :host {
                             position:fixed;
                             bottom:0;left:0;right:0;
@@ -60,13 +60,28 @@ export class NearResources extends LitElement {
                     label{display:block;text-align:center}
                     fieldset{border-radius:6px;border:solid 1px #8884}
                     fieldset > label {text-align:left} 
-                    mwc-icon.close{position:absolute; right:0;top:0; cursor:pointer;}
+                    .resource-close{
+                        position:absolute;
+                        right:0;
+                        top:0;
+                        cursor:pointer;
+                        border:none;
+                        background:transparent;
+                        box-shadow:none;
+                        color:inherit;
+                    }
+                    .resource-close:hover,
+                    .resource-close:focus-visible{
+                        border-color:transparent;
+                        background:transparent;
+                        color:var(--near-primary);
+                    }
 
                     @media(min-width:600px){
                             #editpanel{flex-direction:row}
                     }   
                     
-                `;
+                `];
         }
         /**
          * Define properties. Properties defined here will be automatically 
@@ -204,12 +219,14 @@ export class NearResources extends LitElement {
                                 ${this.renderSelectAspectRatio()}
                                 ${this.renderSelectMaxWidth()}
                                 </div>
-                                <mwc-button outlined @click="${this.upload}">ok</mwc-button>
+                                <button type="button" @click="${this.upload}">ok</button>
                                 
                         </div>
                 </div>
                 
-                <mwc-icon class="close" @click="${()=>this.state=status.GALLERY}" title="back">keyboard_return</mwc-icon>
+                <button type="button" class="resource-close near-icon-button" @click="${()=>this.state=status.GALLERY}" title="back" aria-label="back">
+                        <near-icon name="keyboard_return"></near-icon>
+                </button>
                 </div>`;
 
         }  
@@ -226,10 +243,12 @@ export class NearResources extends LitElement {
                         @click="${this.onClick}"  >
                 
                 <div>
-                <mwc-button icon="add" @click="${(e)=>{this.state=status.EDIT;e.stopPropagation()}}">upload</mwc-button>        
+                <button type="button" @click="${(e)=>{this.state=status.EDIT;e.stopPropagation()}}">upload</button>        
                 </div>
                 ${this.imageList()}
-                <mwc-icon class="close" @click="${this.close}" title="close">close</mwc-icon>
+                <button type="button" class="resource-close near-icon-button" @click="${this.close}" title="close" aria-label="close">
+                        <near-icon name="close"></near-icon>
+                </button>
                 </div>`;
              
         }

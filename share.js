@@ -1,6 +1,6 @@
 import {LitElement, html, css} from "lit-element";
-import {IconButton} from '@material/mwc-icon-button'
 import { trackGa } from './analytics.js';
+import './near-icon.js';
 
 
 export class NearShare extends LitElement {
@@ -52,7 +52,19 @@ export class NearShare extends LitElement {
                 
                 :host a{ text-decoration:none}
                 ::slotted(*) { display:block}
-                :host[open] {display:inline-block}                
+                :host[open] {display:inline-block}
+                .trigger{
+                        display:inline-flex;
+                }
+                .share-trigger{
+                        border:none;
+                        background:transparent;
+                        box-shadow:none;
+                        padding:0;
+                        min-height:auto;
+                        color:inherit;
+                        cursor:pointer;
+                }
                 `;
 
         }
@@ -65,15 +77,6 @@ export class NearShare extends LitElement {
                 this.open=false;
                 this.label='';
                 this.addEventListener("item-selected",this.closeMenu);
-                let iconButton=new IconButton();
-                iconButton.setAttribute("name","share");
-                //iconButton.id="sharebtn";
-                iconButton.icon="share";
-                iconButton.label=this.label;
-                iconButton.addEventListener("click",this.onShare.bind(this));
-                this.innerHTML="";
-                this.appendChild(iconButton);
-                
         }
 
 
@@ -132,7 +135,13 @@ export class NearShare extends LitElement {
                 }
                 
                 return html`
-                <slot></slot>
+                <span class="trigger" @click="${this.onShare}">
+                <slot>
+                        <button type="button" class="share-trigger near-icon-button" aria-label="${this.label || 'share'}">
+                                <near-icon name="share"></near-icon>
+                        </button>
+                </slot>
+                </span>
                  ${navigator.share? '' : this.renderButtons()}
                 `
         }

@@ -1,79 +1,109 @@
-import { LitElement, html, css } from 'lit-element';
+import { LitElement, html, svg, css } from 'lit-element';
 
 const iconTemplates = {
-  add: html`
+  add: svg`
     <path d="M12 5v14"></path>
     <path d="M5 12h14"></path>
   `,
-  arrow_drop_down: html`
+  arrow_drop_down: svg`
     <path d="M7 10l5 5 5-5"></path>
   `,
-  arrow_right: html`
+  arrow_left: svg`
+    <path d="M15 6l-6 6 6 6"></path>
+  `,
+  arrow_right: svg`
     <path d="M9 6l6 6-6 6"></path>
   `,
-  cancel: html`
+  cancel: svg`
     <path d="M6 6l12 12"></path>
     <path d="M18 6L6 18"></path>
   `,
-  close: html`
+  close: svg`
     <path d="M6 6l12 12"></path>
     <path d="M18 6L6 18"></path>
   `,
-  delete: html`
+  delete: svg`
     <path d="M5 7h14"></path>
     <path d="M9 7V5h6v2"></path>
     <path d="M8 7v11"></path>
     <path d="M16 7v11"></path>
     <path d="M6 7l1 13h10l1-13"></path>
   `,
-  done: html`
+  done: svg`
     <path d="M5 13l4 4L19 7"></path>
   `,
-  edit: html`
+  edit: svg`
     <path d="M4 20l4.5-1 9.5-9.5-3.5-3.5L5 15.5 4 20z"></path>
     <path d="M13.5 6l3.5 3.5"></path>
   `,
-  expand_more: html`
+  expand_more: svg`
     <path d="M7 10l5 5 5-5"></path>
   `,
-  menu: html`
+  format_align_left: svg`
+    <path d="M5 7h14"></path>
+    <path d="M5 11h10"></path>
+    <path d="M5 15h14"></path>
+    <path d="M5 19h10"></path>
+  `,
+  format_align_center: svg`
+    <path d="M5 7h14"></path>
+    <path d="M7 11h10"></path>
+    <path d="M5 15h14"></path>
+    <path d="M7 19h10"></path>
+  `,
+  format_align_right: svg`
+    <path d="M5 7h14"></path>
+    <path d="M9 11h10"></path>
+    <path d="M5 15h14"></path>
+    <path d="M9 19h10"></path>
+  `,
+  menu: svg`
     <path d="M4 7h16"></path>
     <path d="M4 12h16"></path>
     <path d="M4 17h16"></path>
   `,
-  moon: html`
+  moon: svg`
     <path d="M19 14.5A7.5 7.5 0 1112 5a6 6 0 007 9.5z"></path>
   `,
-  more_vert: html`
+  more_vert: svg`
     <circle cx="12" cy="6.5" r="1.5"></circle>
     <circle cx="12" cy="12" r="1.5"></circle>
     <circle cx="12" cy="17.5" r="1.5"></circle>
   `,
-  person: html`
+  keyboard_return: svg`
+    <path d="M7 7l-4 5 4 5"></path>
+    <path d="M3 12h11a4 4 0 014 4v1"></path>
+  `,
+  label: svg`
+    <path d="M11 5H6.5A1.5 1.5 0 005 6.5V11"></path>
+    <path d="M11 5l8 8-6 6-8-8V5h6z"></path>
+    <circle cx="8.5" cy="8.5" r="1"></circle>
+  `,
+  person: svg`
     <circle cx="12" cy="8" r="3.25"></circle>
     <path d="M5 19c1.75-3 4.1-4.5 7-4.5s5.25 1.5 7 4.5"></path>
   `,
-  redo: html`
+  redo: svg`
     <path d="M18 8v5h-5"></path>
     <path d="M18 13a7 7 0 10-2.05 4.95"></path>
   `,
-  remove_circle: html`
+  remove_circle: svg`
     <circle cx="12" cy="12" r="8.5"></circle>
     <path d="M8 12h8"></path>
   `,
-  share: html`
+  share: svg`
     <circle cx="7" cy="12" r="1.75"></circle>
     <circle cx="17" cy="7" r="1.75"></circle>
     <circle cx="17" cy="17" r="1.75"></circle>
     <path d="M8.5 11.25l7-3.5"></path>
     <path d="M8.5 12.75l7 3.5"></path>
   `,
-  shopping_cart: html`
+  shopping_cart: svg`
     <circle cx="10" cy="18" r="1.5"></circle>
     <circle cx="17" cy="18" r="1.5"></circle>
     <path d="M3.5 5H6l1.75 8h9l2-6H7"></path>
   `,
-  sun: html`
+  sun: svg`
     <circle cx="12" cy="12" r="3.5"></circle>
     <path d="M12 2.5v2.5"></path>
     <path d="M12 19v2.5"></path>

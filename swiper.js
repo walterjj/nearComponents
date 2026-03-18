@@ -1,11 +1,5 @@
 import {LitElement, html, css } from 'lit-element'
-import {Icon} from "@material/mwc-icon"
-import {Formfield} from '@material/mwc-formfield'
-import {Button} from '@material/mwc-button'
-import {NearUser} from "./user";
-import {NearResources} from "./resources";
-import {urlize} from "./urlize";
-import {styles} from "./styles";
+import './near-icon.js';
 
 //adapted from https://css-tricks.com/simple-swipe-with-vanilla-javascript/
 
@@ -94,8 +88,12 @@ export class NearSwiper extends LitElement {
         render(){
                 return html`
                 <slot></slot>
-                <mwc-icon @click="${this.prev}" id="prev">arrow_left</mwc-icon>
-                <mwc-icon @click="${this.next}" id="next">arrow_right</mwc-icon>`
+                <button type="button" class="near-icon-button" @click="${this.prev}" id="prev" aria-label="previous">
+                        <near-icon name="arrow_left"></near-icon>
+                </button>
+                <button type="button" class="near-icon-button" @click="${this.next}" id="next" aria-label="next">
+                        <near-icon name="arrow_right"></near-icon>
+                </button>`
         }
 
         getSlot(){
@@ -161,5 +159,8 @@ export class NearSwiper extends LitElement {
 
 }
 
-customElements.define("near-swiper",NearSwiper);
-
+try {
+        customElements.define("near-swiper",NearSwiper);
+} catch (error) {
+        // ignore duplicate registrations during local reloads
+}

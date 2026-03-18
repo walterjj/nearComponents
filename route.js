@@ -1,43 +1,51 @@
-
-
-
 export class NearLocation {
 
         constructor(listener=null, hashListener=null){
-                //super();
-                //this.path=window.decodeURIComponent(window.location.pathname);
-                //this.query= window.location.search.slice(1);
-                //this.hash= window.decodeURIComponent(window.location.hash.slice(1));
-                if(NearLocation.instance) return;
-                NearLocation.instance=this;
+                if(NearLocation.instance) {
+                        if (listener) NearLocation.instance.listener = listener;
+                        if (hashListener) NearLocation.instance.hashListener = hashListener;
+                        return NearLocation.instance;
+                }
                 this.dwell=2000;
                 this.last=window.performance.now();
                 this.listener=listener;
                 this.hashListener=hashListener;
-                window.addEventListener('hashchange',this.onHashChange.bind(this));
-                window.addEventListener('popstate',this.onChange.bind(this));
-                window.addEventListener('near-route',this.onChange.bind(this));
+                this.boundOnHashChange=this.onHashChange.bind(this);
+                this.boundOnChange=this.onChange.bind(this);
+                NearLocation.instance=this;
+                window.addEventListener('hashchange',this.boundOnHashChange);
+                window.addEventListener('popstate',this.boundOnChange);
+                window.addEventListener('near-route',this.boundOnChange);
                 this.onChange();
         }
 
+        readPath(){
+                return window.decodeURIComponent(window.location.pathname);
+        }
+
+        readQuery(){
+                return window.location.search.substring(1);
+        }
+
+        readHash(){
+                return window.decodeURIComponent(window.location.hash.substring(1));
+        }
+
         changed(){
-                return(this.path != window.decodeURIComponent(window.location.pathname)
-                        ||  this.query != window.location.search.substring(1)); 
+                return(this.path != this.readPath()
+                        ||  this.query != this.readQuery());
 
         }
 
         hashChanged(){
-                return(this.hash != window.decodeURIComponent(window.location.hash.substring(1)));
+                return(this.hash != this.readHash());
         }
 
         onChange(){
                 let changed=this.changed();
-                
-                //this.hash = window.decodeURIComponent(window.location.hash.substring(1));
                 if(changed) {
-                        this.path = window.decodeURIComponent(window.location.pathname);
-                        console.log("onChange",this.path)
-                        this.query = window.location.search.substring(1);
+                        this.path = this.readPath();
+                        this.query = this.readQuery();
                         if(this.listener) this.listener(this); 
                 }
                 else this.onHashChange();
@@ -45,9 +53,9 @@ export class NearLocation {
 
 
         onHashChange(){
-                this.hash = window.decodeURIComponent(window.location.hash.substring(1));
-                console.log("hash:",this.hash);
-                if(this.hashChanged && this.hashListener) this.hashListener(this);
+                const changed = this.hashChanged();
+                this.hash = this.readHash();
+                if(changed && this.hashListener) this.hashListener(this);
         }
  
 
@@ -64,18 +72,34 @@ export class NearRoute extends HTMLAnchorElement {
 
     clickHandler(event) {
         if (event.button !== 0) return;
-        if (event.metaKey || event.ctrlKey || event.shiftKey) return;
-    
-        console.log("nearlink clicked",this);    
+        if (event.defaultPrevented) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (this.target && this.target !== '_self') return;
+        if (this.hasAttribute('download')) return;
+
+        const url = new URL(this.href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+
         event.preventDefault();
-        window.history.pushState({}, null, this.href + window.location.search)
-        window.dispatchEvent(new CustomEvent('near-route'))
+        NearRoute.navigate(`${url.pathname}${url.search}${url.hash}`);
     }
 }
 
 NearRoute.navigate=(href)=> {
-        window.history.pushState({}, null, href)
+        if (!href) return;
+        const target = new URL(href, window.location.href);
+        const nextHref = `${target.pathname}${target.search}${target.hash}`;
+        const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        if (nextHref === currentHref) {
+                window.dispatchEvent(new CustomEvent('near-route'));
+                return;
+        }
+        window.history.pushState({}, null, nextHref)
         window.dispatchEvent(new CustomEvent('near-route'))   
 }
 
-customElements.define('near-route', NearRoute,{extends:'a'})
+try {
+        customElements.define('near-route', NearRoute,{extends:'a'})
+} catch (error) {
+        // ignore duplicate registrations during local reloads
+}

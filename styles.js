@@ -1,8 +1,9 @@
 import {css} from 'lit-element';
+import { nearPicoTokens, nearControlStyles } from './ui.css.js';
 
 
 export function styles()
-{ return css`
+{ return [nearPicoTokens, nearControlStyles, css`
 :host > near-modal{ position:fixed;
         height:100vh; 
         top:0; left:0; bottom:0; right:0; 
@@ -43,6 +44,14 @@ near-modal h3 {
         width:100%;
         
 }
+form-actions {
+  display:flex;
+  gap:.75rem;
+  width:100%;
+  justify-content:flex-end;
+  align-items:center;
+  flex-wrap:wrap;
+}
 near-modal img{
   max-width:100%;
   max-height:50vh;
@@ -68,7 +77,8 @@ textarea {
         nmin-height:5em;
         border-top:solid solid rgba(128,128,128,0.2);
 }
-near-modal mwc-formfield {
+near-modal .formfield,
+near-modal .near-formfield {
   flex-direction:column;
 }
 #name_button {
@@ -82,13 +92,27 @@ near-modal mwc-formfield {
     max-width:56px;     
     clip-path: circle(45% at center);
   }
-  mwc-icon{font-variant:none}
-  mwc-icon.properties-icon { float:right;cursor:pointer}
+  near-icon{font-variant:none}
+  .properties-icon { float:right;cursor:pointer}
+  button.properties-icon {
+    border:none;
+    background:transparent;
+    box-shadow:none;
+    padding:.25rem;
+    min-height:auto;
+    color:var(--near-muted-color);
+  }
+  button.properties-icon:hover,
+  button.properties-icon:focus-visible {
+    color:var(--near-primary);
+    background:transparent;
+    border-color:transparent;
+  }
 
 
 }
 
 #edit-control{position:absolute; font-size:14px; right:1px ; bottom:3px; cursor:pointer}  
  
-`;
+`];
 }

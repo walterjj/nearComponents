@@ -1,10 +1,10 @@
 import { LitElement, html, css } from 'lit-element';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 import {styles} from "./styles";
-import {Icon} from "@material/mwc-icon";
 import {NearUser} from "./user";
 import * as fa from "@fortawesome/fontawesome-free/js/fontawesome";
 import * as fab from "@fortawesome/fontawesome-free/js/brands.js";
+import './near-icon.js';
 
 
 let facebookIcon=`<svg width="40px" xmlns="http://www.w3.org/2000/svg" fill="#bbb" viewBox="0 0 512 512"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245V327.69h-63V256h63v-54.64c0-62.15 37-96.48 93.67-96.48 27.14 0 55.52 4.84 55.52 4.84v61h-31.28c-30.8 0-40.41 19.12-40.41 38.73V256h68.78l-11 71.69h-57.78V501C413.31 482.38 504 379.78 504 256z"/></svg>`
@@ -85,6 +85,13 @@ export class NearSocial extends LitElement {
                 #edit-control{position:absolute; font-size:14px; right:0 ; bottom:0;}
                 #placeholder {background-color:#8884; color:#fff; height:50px;display:flex;justify-content:center;align-items:center;} 
                 #edit-control, #placeholder {cursor:pointer}
+                #edit-control{
+                        border:none;
+                        background:transparent;
+                        box-shadow:none;
+                        padding:0;
+                        min-height:auto;
+                }
                 `];
                 
         }
@@ -154,8 +161,8 @@ export class NearSocial extends LitElement {
                 </label>
                 
                 <form-actions>
-                <mwc-button @click="${this.cancel}" >cancel</mwc-button>
-                <mwc-button @click="${this.save}" >OK</mwc-button>
+                <button type="button" @click="${this.cancel}" >cancel</button>
+                <button type="button" data-variant="primary" @click="${this.save}" >OK</button>
                 </form-actions>
                 </div>
                 </near-modal>`  
@@ -213,7 +220,7 @@ export class NearSocial extends LitElement {
                 return html`                      
                         <slot></slot>
                         ${NearUser.canEdit()?
-                                html`<mwc-icon id="edit-control" title="edit" @click="${this.startEdit}" >edit</mwc-icon>`:``} `
+                                html`<button type="button" id="edit-control" title="edit" @click="${this.startEdit}" aria-label="edit"><near-icon name="edit"></near-icon></button>`:``} `
         }
 
 
@@ -244,4 +251,3 @@ customElements.define('near-social', NearSocial);
 customElements.whenDefined('near-section-library').then( ()=>{
         nearSectionLibrary.add(new NearSocial());
 });
-

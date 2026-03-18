@@ -1,8 +1,5 @@
 import {LitElement, html, css } from 'lit-element'
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
-import {Icon} from "@material/mwc-icon"
-//import {Formfield} from '@material/mwc-formfield'
-import {Button} from '@material/mwc-button'
 import {NearUser} from "./user";
 import {NearResources} from "./resources";
 import {urlize} from "./urlize";
@@ -10,6 +7,7 @@ import {styles} from "./styles";
 import {NearTags} from "./tags";
 import {NearSwiper} from "./swiper";
 import {NearSpinner} from "./spinner";
+import './near-icon.js';
 
 
 
@@ -78,7 +76,10 @@ export class NearContent extends LitElement{
 
         editButton(){
                 if(NearUser.instance && NearUser.instance.canEdit())
-                        return html`<mwc-icon class="properties-icon" @click="${this.beginEdit}" title="props">more_vert</mwc-icon>`
+                        return html`
+                        <button type="button" class="near-icon-button properties-icon" @click="${this.beginEdit}" title="props" aria-label="props">
+                                <near-icon name="more_vert"></near-icon>
+                        </button>`
                 return '';         
         }
 
@@ -124,8 +125,8 @@ export class NearContent extends LitElement{
                 </label>
                 ${this.extraFields()}
                 <form-actions>
-                <mwc-button @click="${this.cancel}" >cancel</mwc-button>
-                <mwc-button @click="${this.create}" >OK</mwc-button>
+                <button type="button" @click="${this.cancel}" >cancel</button>
+                <button type="button" data-variant="primary" @click="${this.create}" >OK</button>
                 </form-actions>
                 <near-spinner id="pending" full style="visibility:${this.pending? 'visible' :'hidden'}"></near-spinner>
                 </div>
@@ -155,7 +156,7 @@ export class NearContent extends LitElement{
                         </label>
                         <label>
                         Image
-                        <mwc-button @click="${this.resources}">Select...</mwc-button>
+                        <button type="button" @click="${this.resources}">Select...</button>
                         ${this.image?
                                 html`<img @click="${this.resources}" src="${this.image}">`:''}
                         </label>
@@ -171,8 +172,8 @@ export class NearContent extends LitElement{
                         </label>
                         ${this.extraFields()}
                         <form-actions>
-                        <mwc-button @click="${this.cancelEdit}" >close</mwc-button>
-                        <mwc-button disabled id="OK" @click="${this.endEdit}" >OK</mwc-button>
+                        <button type="button" @click="${this.cancelEdit}" >close</button>
+                        <button type="button" data-variant="primary" disabled id="OK" @click="${this.endEdit}" >OK</button>
                         </form-actions>
                        
                         
@@ -580,7 +581,11 @@ export class NearContents extends LitElement {
                         `)
                 });
                 if(!this.nocache && NearUser.instance && NearUser.instance.canEdit())
-                        r.push(html`<mwc-button style="clear:both" outlined id="refresh" icon="redo" label="rebuild" class="properties-icon" @click="${this.refresh}" title="rebuild"></mwc-button>`)
+                        r.push(html`
+                        <button type="button" style="clear:both" id="refresh" class="properties-icon" @click="${this.refresh}" title="rebuild">
+                                <near-icon name="redo"></near-icon>
+                                rebuild
+                        </button>`)
                 return r;
         }
 
@@ -755,7 +760,11 @@ export class NearContentsSwiper extends NearContents {
                ${this.documentsHTML()}
                 </near-swiper>
                 ${NearUser.instance && NearUser.instance.canEdit() ?
-                 html`<mwc-button id="refresh"  outlined class="properties-icon" icon="redo" label="rebuild"  @click="${this.refresh}" title="rebuild"></mwc-icon>`
+                 html`
+                 <button type="button" id="refresh" class="properties-icon" @click="${this.refresh}" title="rebuild">
+                        <near-icon name="redo"></near-icon>
+                        rebuild
+                 </button>`
                 :''}
                 `;
         }

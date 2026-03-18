@@ -1,8 +1,5 @@
 import {LitElement, html, css } from 'lit-element'
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
-import {Icon} from "@material/mwc-icon"
-import {Formfield} from '@material/mwc-formfield'
-import {Button} from '@material/mwc-button'
 import {NearUser} from "./user";
 import {NearResources} from "./resources";
 import {urlize} from "./urlize";
@@ -51,8 +48,8 @@ export class NearDialog extends LitElement{
 
                 ${this.fields()}
                 <form-actions>
-                <mwc-button @click="${this.cancel}" >cancel</mwc-button>
-                <mwc-button @click="${this.do}" >OK</mwc-button>
+                <button type="button" @click="${this.cancel}" >cancel</button>
+                <button type="button" data-variant="primary" @click="${this.do}" >OK</button>
                 </form-actions>
                 </div>
                 </near-modal>`  

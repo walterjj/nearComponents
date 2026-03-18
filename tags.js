@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit-element';
 //import { Template } from 'lit-html';
 import { NearUser } from './user';
-import {Icon} from "@material/mwc-icon"
+import './near-icon.js';
 export class NearTags extends LitElement {
         static get styles() {
                 return css`
@@ -177,8 +177,20 @@ class Tag extends LitElement {
 
         static get styles() {
                 return css`
-                    :host {position:relative;display:inline-block;border:solid 1px #888C; border-radius:1em;padding:1px 1.5em 1px 1em; color:#888c}
-                    mwc-icon{position:absolute; right:0; font-size:1.2em}                    
+                    :host {position:relative;display:inline-block;border:solid 1px #888C; border-radius:1em;padding:1px 2em 1px 1em; color:#888c}
+                    button{
+                            position:absolute;
+                            right:0;
+                            top:50%;
+                            transform:translateY(-50%);
+                            border:none;
+                            background:transparent;
+                            box-shadow:none;
+                            color:inherit;
+                            padding:0 .35em;
+                            min-height:auto;
+                            cursor:pointer;
+                    }
                 `;
         }
 
@@ -206,7 +218,7 @@ class Tag extends LitElement {
 
         
         render() {
-                return html`${this.tag}<mwc-icon title="remove" @click="${this.clear}">remove_circle</mwc-icon>`
+                return html`${this.tag}<button type="button" title="remove" @click="${this.clear}" aria-label="remove"><near-icon name="remove_circle"></near-icon></button>`
         }
 }
 

@@ -1,5 +1,4 @@
 import { LitElement, html, css } from 'lit-element';
-import {Icon} from "@material/mwc-icon"
 
 let icon=`
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -225,4 +224,3 @@ customElements.define('near-amz', NearAmz);
 customElements.whenDefined('near-section-library').then( ()=>{
         //nearSectionLibrary.add(new NearAmz());
 });
-

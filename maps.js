@@ -2,7 +2,6 @@
 import {LitElement,html,css} from 'lit-element';
 import OpenLocationCode from './open-location-code.js';
 import {NearDialog} from "./dialog";
-import {Button} from '@material/mwc-button'
 //import {mapbox_css} from './mapbox_css';
 import {NearUser} from "./user";
 
@@ -148,9 +147,10 @@ export class NearMap extends LitElement {
                 class MapControl {
                         onAdd(map) {
                             this._map = map;
-                            this._container = document.createElement('mwc-button');
+                            this._container = document.createElement('button');
                             this._container.className = 'mapboxgl-ctrl';
                             this._container.textContent = 'geolocation';
+                            this._container.type = 'button';
                             this._container.addEventListener("click",nearmap.geolocation.bind(nearmap));
                             return this._container;
                         }

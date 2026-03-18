@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "nearComponents",
   "packageManager": "pnpm@10.20.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

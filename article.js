@@ -1,11 +1,6 @@
 import {LitElement, html, css } from 'lit-element'
-import {Icon} from "@material/mwc-icon"
-import {Formfield} from '@material/mwc-formfield'
-import {Button} from '@material/mwc-button'
 import {NearUser} from "./user";
-import {NearResources} from "./resources";
 import {urlize} from "./urlize";
-import {styles} from "./styles";
 import {NearContent,NearContents, NearContentsSelect} from "./content";
 
 export class NearArticle extends NearContent {
@@ -168,4 +163,3 @@ export class NearArticle extends NearContent {
 customElements.define("near-article",NearArticle);
 
 NearArticle.creatorSuffix=true;
-

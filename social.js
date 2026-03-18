@@ -1,11 +1,11 @@
 import { LitElement, html, css } from 'lit-element';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 import {styles} from "./styles";
-import {Icon} from "@material/mwc-icon";
 import {NearUser} from "./user";
 import * as fa from "@fortawesome/fontawesome-free/js/fontawesome";
 import * as fab from "./faicons.js";
 import {NearBlock} from "./blocks";
+import './near-icon.js';
 
 
 export class NearSocial extends NearBlock {
@@ -27,6 +27,13 @@ export class NearSocial extends NearBlock {
                 #edit-control{position:absolute; font-size:14px; right:0 ; bottom:0;}
                 #placeholder {background-color:#fff; border:dotted 2px #eee; color:#eee; height:50px;display:flex;justify-content:center;align-items:center;} 
                 #edit-control, #placeholder {cursor:pointer}
+                #edit-control{
+                        border:none;
+                        background:transparent;
+                        box-shadow:none;
+                        padding:0;
+                        min-height:auto;
+                }
                 `];
                 
         }
@@ -96,8 +103,8 @@ export class NearSocial extends NearBlock {
                 </label>
                 
                 <form-actions>
-                <mwc-button @click="${this.cancel}" >cancel</mwc-button>
-                <mwc-button @click="${this.save}" >OK</mwc-button>
+                <button type="button" @click="${this.cancel}" >cancel</button>
+                <button type="button" data-variant="primary" @click="${this.save}" >OK</button>
                 </form-actions>
                 </div>
                 </near-modal>`  
@@ -154,7 +161,7 @@ export class NearSocial extends NearBlock {
                 return html`                      
                         <slot></slot>
                         ${NearUser.canEdit()?
-                                html`<mwc-icon id="edit-control" title="edit" @click="${this.startEdit}" >edit</mwc-icon>`:``} `
+                                html`<button type="button" id="edit-control" title="edit" @click="${this.startEdit}" aria-label="edit"><near-icon name="edit"></near-icon></button>`:``} `
         }
 
 
@@ -185,4 +192,3 @@ customElements.define('near-social', NearSocial);
 customElements.whenDefined('near-section-library').then( ()=>{
         nearSectionLibrary.add(new NearSocial());
 });
-
