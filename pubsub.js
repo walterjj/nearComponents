@@ -3,8 +3,10 @@
 import {LitElement, html, css} from "lit-element";
 import {NearUser} from "./user";
 //import * as MQTT from './mqtt.min';
-import * as MQTT from 'mqtt/dist/mqtt.min';
+//import * as MQTT from 'mqtt/dist/mqtt.min';
 //import * as MQTT from 'mqtt/dist/mqtt';
+import mqtt from mqtt;
+
 
 let isLoaded=false;
 async function initMqtt() {
@@ -120,7 +122,7 @@ export class NearMqtt extends LitElement {
                 console.log("connecting to",this.endpoint,options);               
                 if(this.endpoint) {
                         return new Promise((resolve,reject)=>{
-                                this.client=window.mqtt.connect(this.endpoint,options);
+                                this.client=mqtt.connect(this.endpoint,options);
                                 this.setupEvents();
                                 resolve();
                         });
@@ -128,7 +130,7 @@ export class NearMqtt extends LitElement {
                 return new Promise((resolve)=>{
                         NearUser.instance.getApi("ioturl").then((data)=>{
                                 console.log(data.url);  
-                                this.client=window.mqtt.connect(data.url,options);
+                                this.client=mqtt.connect(data.url,options);
                                 console.log(this);
                                 this.setupEvents();
                                 resolve(this);
